@@ -84,7 +84,7 @@ class TestPairs(unittest.TestCase):
         p2 = PairsList([ap1, ap2, ap5])
 
         p3 = p1.symmetric_difference(p2)
-        self.assertEqual(p3, PairsList([ap4, ap5]))
+        self.assertEqual(p3, PairsList([ap3, ap4, ap5]))
 
 
 if __name__ == '__main__':

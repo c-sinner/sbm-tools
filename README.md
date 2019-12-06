@@ -88,7 +88,7 @@ p3 = p1.union(p2)      # returns PairsList([ap1, ap2, ap3, ap4, ap5])
 p3 = p1.intersection(p2)  # returns PairsList([ap1, ap2])
 
 # symmetric difference
-p3 = p1.symmetric_difference # returns PairsList([ap4, ap5])
+p3 = p1.symmetric_difference # returns PairsList([ap3, ap4, ap5])
 
 ```
 
