@@ -12,7 +12,7 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     values = []
 
     # TODO write is not great as a name as the method it is not writing
-    def write(self, parent):
+    def write(self):
         return '\n'.join([
             self.write_title(),
             self.write_header(),
@@ -25,8 +25,16 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     def write_header(self):
         return self.header_format.format(**dict(zip(self.fields, self.fields)))
 
+    def write_line(self, line):
+        if isinstance(line, dict):
+            return self.line_format.format(**line)
+        else:
+            return self.line_format.format(**dict(zip(self.fields, line)))
+
     def write_values(self):
-        return self.line_format.format(**dict(zip(self.fields, self.values)))
+        if self.values:
+            return '\n'.join([self.write_line(line) for line in self.values])
+        return ''
 
 
 class DefaultsSection(AbstractTopFileSection):
@@ -39,7 +47,7 @@ class DefaultsSection(AbstractTopFileSection):
             'comb-rule',
             'gen-pairs',
         ]
-        self.values = [1, 1, 'no']
+        self.values = [[1, 1, 'no']]
 
 
 class AtomTypesSection(AbstractTopFileSection):
@@ -70,14 +78,17 @@ class AtomsSection(AbstractTopFileSection):
 
 
 class PairsSection(AbstractTopFileSection):
-    def __init__(self, pairs):
-        self.title = 'pairs'
-        self.header_format = LennardJonesPotential.header
-        self.line_format = LennardJonesPotential.format
-        self.values = self.get_values(pairs)
+    def __init__(self, pairs, potential=LennardJonesPotential):
+        self.pairs = pairs
+        self.potential = potential
 
-    def get_values(self, parent):
-        return map(LennardJonesPotential, parent.pairs)
+        self.title = 'pairs'
+        self.header_format = self.potential.header
+        self.line_format = self.potential.format
+        self.values = self.get_values()
+
+    def get_values(self):
+        return [getattr(potential, 'apply')() for potential in map(self.potential, self.pairs)]
 
 
 class BondsSection(AbstractTopFileSection):
@@ -108,7 +119,7 @@ class SystemSection(AbstractTopFileSection):
         self.fields = [
             'name',
         ]
-        self.values = ['Macromolecule']
+        self.values = [['Macromolecule']]
 
 
 class MoleculesSection(AbstractTopFileSection):
@@ -120,7 +131,7 @@ class MoleculesSection(AbstractTopFileSection):
             'name',
             '#molec'
         ]
-        self.values = ['Macromolecule', 1]
+        self.values = [['Macromolecule', 1]]
 
 
 class TopFile(AbstractParameterFile):
@@ -143,7 +154,6 @@ class TopFile(AbstractParameterFile):
         "atom_types_section": AtomTypesSection(),
         "molecule_type_section": MoleculeTypeSection(),
         "atoms_section": AtomsSection(),
-        "pairs_section": PairsSection([]),
         "bonds_section": BondsSection(),
         "exclusions_section": ExclusionsSection(),
         "angles_section": AnglesSection(),
@@ -156,7 +166,7 @@ class TopFile(AbstractParameterFile):
         super().__init__()
         kwargs = {**self.default_kwargs, **kwargs}
 
-        if isinstance(PairsList, pairs):
+        if isinstance(pairs, PairsList):
             self.pairs = pairs
         elif pairs:
             raise TypeError(
@@ -164,20 +174,33 @@ class TopFile(AbstractParameterFile):
         else:
             self.pairs = PairsList()
 
-        if isinstance(AbstractPotential, potential):
+        if isinstance(potential, AbstractPotential):
             self.potential = potential
         elif potential:
             raise TypeError(
                 'Expected {0} to inherit from AbstractPotential. \
                 Initiate a new AbstractPotential object using AbstractPotential()')
         else:
-            self.potential = AbstractPotential()
+            self.potential = LennardJonesPotential
+
+        self.pairs_section = PairsSection(self.pairs, self.potential)
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def __setattr__(self, key, value):
+        if key == 'pairs':
+            isinstance(value, PairsList)
+            self.pairs_section = PairsSection(value)
+        if key == 'potential':
+            isinstance(value, AbstractPotential)
+            self.pairs_section = PairsSection(self.pairs, value)
+        super(TopFile, self).__setattr__(key, value)
 
     def save(self):
         super(TopFile, self).save()
 
     def built(self):
-        return "\n\n".join([self.__getattribute__(key).write(self) for key in self.default_sections])
+        output = "\n\n".join([self.__getattribute__(key).write() for key in self.default_sections])
+        for line in output.split('\n'):
+            print(line)

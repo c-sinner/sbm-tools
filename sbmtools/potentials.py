@@ -8,19 +8,20 @@ class AbstractPotential(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def get_values(self):
+    def apply(self):
         raise NotImplementedError
 
 
 class BondPotential(object):
+    header = ';ai     aj      func    r0(nm)  Kb'
+    format = '{index:6d} {partner:6d} {ftype:d}  {dist:.8E} {kb:.8E}'
+    strength = 0.200000000E+05
+    function_type = 1
+
     def __init__(self, pair=None):
         super(BondPotential, self).__init__(pair)
-        self.header = ';ai     aj      func    r0(nm)  Kb'
-        self.format = '{index:6d} {partner:6d} {ftype:d}  {dist:.8E} {kb:.8E}'
-        self.strength = 0.200000000E+05
-        self.function_type = 1
 
-    def get_values(self):
+    def apply(self):
         return {
             "index": self.pair.index,  #TODO: index might clash with builtins
             "partner": self.pair.partner,
@@ -31,16 +32,14 @@ class BondPotential(object):
 
 
 class LennardJonesPotential(AbstractPotential):
-    header = ''
-    format = ''
+    header = '; i j type and weight'
+    format = '{index:6d} {partner:6d} {ftype:d}  {c6:.5E} {c12:.5E}'
+    function_type = 1
 
     def __init__(self, pair=None):
         super(LennardJonesPotential, self).__init__(pair)
-        self.header = '; i j type and weight'
-        self.format = '{index:6d} {partner:6d} {ftype:d}  {c6:.5E} {c12:.5E}'
-        self.function_type = 1
 
-    def get_values(self):
+    def apply(self):
         return {
             "index": self.pair.index,  #TODO: index might clash with builtins
             "partner": self.pair.partner,
@@ -58,7 +57,7 @@ class C10Potential(AbstractPotential):
         self.format = '{index:6d} {partner:6d} {ftype:d}  {c10:.5E} {c12:.5E}'
         self.function_type = 1
 
-    def get_values(self):
+    def apply(self):
         return {
             "index": self.pair.index,  #TODO: index might clash with builtins
             "partner": self.pair.partner,
