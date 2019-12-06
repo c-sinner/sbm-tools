@@ -1,7 +1,8 @@
 # sbm-tools
 
-DESCRIPTION
+sbm-tools is a simple python package for creating, modifying, and maintaining input files for native Structure-Based Model simulations to be used with the popular simulation software [GROMACS](http://www.gromacs.org/).
 
+<a name="top"></a>  
 ### Table of Contents
 [Introduction](#introduction)  
 [Installation](#installation)  
@@ -13,8 +14,17 @@ DESCRIPTION
 <a name="installation"></a>  
 ### Installation
 
-No installation instructions yet.
+There is no specific installation script at the moment. Download the repository to your machine:
 
+```shell script
+wget https://github.com/c-sinner/sbm-tools.git
+```
+
+The software writes input files for [GROMACS](http://www.gromacs.org/). If you want to use gaussian potentials please install and use the GROMACS binary distributed on the SMOG website:
+
+[Gromacs v4.5.4 containing Gaussian contact potentials](http://smog-server.org/SBMextension.html#gauss)
+
+[⇧ Go back to top ⇧](#top) 
 <a name="introduction"></a>  
 ### Introduction
 
@@ -22,7 +32,7 @@ Hello young Padawan<sup>TM</sup>, let me guide you through the world of protein 
 
 #### What is a protein?
 
-
+[⇧ Go back to top ⇧](#top) 
 <a name="usage"></a>  
 ### Usage
 
@@ -85,14 +95,15 @@ p3 = p1.symmetric_difference # returns PairsList([a4,a5])
 
 ```
 
-
+[⇧ Go back to top ⇧](#top) 
 <a name="credits"></a>  
 ### Credits
-Code written by Dr. Claude Sinner @ UTDallas. Please get in touch if you have any questions or this code was useful to you.
+Code written by Dr. Claude Sinner @ UTDallas. Please get in touch if this code was useful to you or you have any questions.
 
+[⇧ Go back to top ⇧](#top) 
 <a name="license"></a>  
 ### License
 
 The project builds upon eSBMTools (Lutz, Sinner, Heuermann, Schug 2013) and copies its GPL3 licence.
-
+[⇧ Go back to top ⇧](#top) 
 
