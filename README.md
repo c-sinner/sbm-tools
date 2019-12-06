@@ -31,12 +31,12 @@ Hello young Padawan<sup>TM</sup>, let me guide you through the world of protein 
 
 #### What is a protein?
 
+#### MD
+There are many ways of running a simulation and **Structure-Based Models combined with Gromacs is only one way of running a simulation**. The two important parts for a biomolecular simulation are the **force-field** and the **simulation software**. Structure-Based Models (SBM) can be understood as a specific kind of force-field (They are a class of implicit solvent models free of electrostatic interactions). Gromacs is one of many programs to run biomolecular simulations. It needs the input parameters in specific file formats, namely .top, .gro, and .mdp files.
 
 <a name="usage"></a>  
 ### Usage
 
-
-Hello, here is the basic workflow of a SBM simulation:
 
 ![Atom coordinates -> contact Map -> Atom Pairs List -> Force Field Potential -> Pairs Section](workflow-simple.png?raw=true "workflow")
 

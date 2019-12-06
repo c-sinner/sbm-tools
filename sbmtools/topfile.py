@@ -1,4 +1,5 @@
-from sbmtools.potentials import LennardJonesPotential
+from sbmtools import PairsList
+from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFileSection, AbstractParameterFile
 
 
@@ -11,7 +12,7 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     values = []
 
     # TODO write is not great as a name as the method it is not writing
-    def write(self):
+    def write(self, parent):
         return '\n'.join([
             self.write_title(),
             self.write_header(),
@@ -75,8 +76,8 @@ class PairsSection(AbstractTopFileSection):
         self.line_format = LennardJonesPotential.format
         self.values = self.get_values(pairs)
 
-    def get_values(self, pairs):
-        return map(LennardJonesPotential, pairs)
+    def get_values(self, parent):
+        return map(LennardJonesPotential, parent.pairs)
 
 
 class BondsSection(AbstractTopFileSection):
@@ -151,11 +152,26 @@ class TopFile(AbstractParameterFile):
         "molecules_section": MoleculeTypeSection()
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, pairs=None, potential=None, **kwargs):
+        super().__init__()
         kwargs = {**self.default_kwargs, **kwargs}
 
-        self.pairs = None
-        self.potential = None
+        if isinstance(PairsList, pairs):
+            self.pairs = pairs
+        elif pairs:
+            raise TypeError(
+                'Expected {0} to be an instance of type PairsList. Initiate a new PairsList object using PairsList()')
+        else:
+            self.pairs = PairsList()
+
+        if isinstance(AbstractPotential, potential):
+            self.potential = potential
+        elif potential:
+            raise TypeError(
+                'Expected {0} to inherit from AbstractPotential. \
+                Initiate a new AbstractPotential object using AbstractPotential()')
+        else:
+            self.potential = AbstractPotential()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -164,4 +180,4 @@ class TopFile(AbstractParameterFile):
         super(TopFile, self).save()
 
     def built(self):
-        return "\n\n".join([self.__getattribute__(key).write() for key in self.default_sections])
+        return "\n\n".join([self.__getattribute__(key).write(self) for key in self.default_sections])
