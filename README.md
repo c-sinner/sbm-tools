@@ -1,5 +1,32 @@
 # sbm-tools
 
+DESCRIPTION
+
+###Table of Contents
+[Introduction](#introduction)  
+[Installation](#installation)  
+[Usage](#usage)  
+[Credits](#credits)  
+[Licence](#license)  
+
+
+<a name="installation"></a>
+###Installation
+
+No installation instructions yet.
+
+<a name="introduction"></a>
+###Introduction
+
+Hello young Padawan<sup>TM</sup>, let me guide you through the world of protein folding and explain the purpose of this repository.
+
+####What is a protein?
+
+
+<a name="usage"></a>
+###Usage
+
+
 Hello, here is the basic workflow of a SBM simulation:
 
 ![Atom coordinates -> contact Map -> Atom Pairs List -> Force Field Potential -> Pairs Section](workflow-simple.png?raw=true "workflow")
@@ -56,5 +83,16 @@ p3 = p1 - p2           # returns PairsList([a3,a4])
 # symmetric difference
 p3 = p1.symmetric_difference # returns PairsList([a4,a5])
 
-
 ```
+
+
+<a name="credits"></a>
+###Credits
+Code written by Dr. Claude Sinner @ UTDallas. Please get in touch if you have any questions or this code was useful to you.
+
+<a name="license"></a>
+###License
+
+The project builds upon eSBMTools (Lutz, Sinner, Heuermann, Schug 2013) and copies its GPL3 licence.
+
+
