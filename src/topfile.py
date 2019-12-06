@@ -1,4 +1,4 @@
-from src.Potentials import LennardJonesPotential
+from src.potentials import LennardJonesPotential
 from src.base import AbstractParameterFileSection, AbstractParameterFile
 
 
