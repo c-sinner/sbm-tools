@@ -1,44 +1,122 @@
-from sbmtools import PairsList
+from sbmtools import PairsList, AbstractParameterFileParser
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFileSection, AbstractParameterFile
+import re
+
+
+class TopFileParser(AbstractParameterFileParser):
+    sections_regex = r'\[[a-z\s]*\][a-zA-Z0-9\#\+\;\s\-\n\.\(\)]*\n'
+    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
+    line_delimiter = '\n'
+
+    def __init__(self, data):
+        super().__init__(data)
+        self.sections = []
+
+    def parse(self):
+        return self.postprocess_result(self.parse_sections(self.preprocess_data(self.data)))
+
+    # handle same titles
+    @staticmethod
+    def postprocess_result(sections_list):
+        def flatten(list_of_lists):
+            return [item for sublist in list_of_lists for item in sublist]
+
+        unique_keys = []
+        [unique_keys.append(x['title']) for x in sections_list if x['title'] not in unique_keys]
+
+        processed = {}
+        for unique_key in unique_keys:
+            processed[unique_key] = flatten(
+                [section['values'] for section in sections_list if section['title'] == unique_key])
+
+        return processed
+
+    @staticmethod
+    def preprocess_data(data):
+        return re.sub(r';.*\n', '', data)
+
+    def parse_sections(self, data):
+        return list(map(self.parse_section, re.findall(self.sections_regex, data, re.MULTILINE)))
+
+    def parse_section(self, section):
+        m = re.match(self.title_regex, section)
+        title = ''
+        if m:
+            title = m.group(1)
+
+        values = [line.split() for line in section.split(self.line_delimiter)[1:] if line]
+        return {"title": title, "values": values}
 
 
 class AbstractTopFileSection(AbstractParameterFileSection):
-    title = ''
     title_format = '[ {0} ]'
     header_format = ';'
     line_format = ''
+    _title = ''
     fields = []
-    values = []
+    _values = []
+    attribute_delimiter = '\n'
+    line_delimiter = '\n'
 
-    # TODO write is not great as a name as the method it is not writing
-    def write(self):
-        return '\n'.join([
-            self.write_title(),
-            self.write_header(),
-            self.write_values()
+    @property
+    def contents(self):
+        return self.attribute_delimiter.join([
+            self.title,
+            self.header,
+            self.values
         ])
 
-    def write_title(self):
-        return self.title_format.format(self.title)
+    @property
+    def title(self):
+        return self.title_format.format(self._title)
 
-    def write_header(self):
+    @property
+    def unformatted_title(self):
+        return self._title
+
+    @title.setter
+    def title(self, value):
+        self._title = value
+
+    @property
+    def header(self):
         return self.header_format.format(**dict(zip(self.fields, self.fields)))
 
-    def write_line(self, line):
-        if isinstance(line, dict):
-            return self.line_format.format(**line)
+    @property
+    def values(self):
+        if isinstance(self._values, str):
+            return self._values
         else:
-            return self.line_format.format(**dict(zip(self.fields, line)))
+            return self.line_delimiter.join(
+                [self.format_line(self.prepare_line(line)) for line in self.get_values()]
+            )
 
-    def write_values(self):
-        if self.values:
-            return '\n'.join([self.write_line(line) for line in self.values])
-        return ''
+    @values.setter
+    def values(self, value):
+        self._values = value
+
+    def prepare_line(self, line):
+        print(line)
+        if isinstance(line, dict):
+            return line
+        else:
+            try:
+                return dict(zip(self.fields, line))
+            except TypeError:
+                print("Expected {0} to be a list of values".format(line))
+                raise
+
+    def format_line(self, line):
+        return self.line_format.format(**line)
+
+    def get_values(self):
+        return self._values
 
 
 class DefaultsSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'defaults'
         self.header_format = ';{nbfunc} {comb-rule} {gen-pairs}'
         self.line_format = '{nbfunc:05d} {comb-rule:5d} {gen-pairs:10s}'
@@ -52,6 +130,7 @@ class DefaultsSection(AbstractTopFileSection):
 
 class AtomTypesSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'atomtypes'
         self.header_format = ';{name}  {mass}     {charge}   {ptype} {c6}       {c12}'
         self.fields = [
@@ -62,23 +141,30 @@ class AtomTypesSection(AbstractTopFileSection):
             'c6',
             'c12',
         ]
-        self.values = [
-
-        ]
+        self.values = []
 
 
 class MoleculeTypeSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'moleculetype'
+        self.header_format = ';{name:10s}     {nrexcl}'
+        self.fields = [
+            'name',
+            'nrexcl'
+        ]
+        self.values = [['Macromolecule', 3]]
 
 
 class AtomsSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'atoms'
 
 
 class PairsSection(AbstractTopFileSection):
-    def __init__(self, pairs, potential=LennardJonesPotential):
+    def __init__(self, pairs, potential):
+        super().__init__()
         self.pairs = pairs
         self.potential = potential
 
@@ -93,26 +179,31 @@ class PairsSection(AbstractTopFileSection):
 
 class BondsSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'bonds'
 
 
 class ExclusionsSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'exclusions'
 
 
 class AnglesSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'angles'
 
 
 class DihedralsSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'dihedrals'
 
 
 class SystemSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'system'
         self.header_format = '{name}'
         self.line_format = '{name}'
@@ -124,6 +215,7 @@ class SystemSection(AbstractTopFileSection):
 
 class MoleculesSection(AbstractTopFileSection):
     def __init__(self):
+        super().__init__()
         self.title = 'molecules'
         self.header_format = '{name}'
         self.line_format = '{name}'
@@ -135,6 +227,10 @@ class MoleculesSection(AbstractTopFileSection):
 
 
 class TopFile(AbstractParameterFile):
+    pairs = PairsList()
+    potential = LennardJonesPotential
+    parser = TopFileParser
+
     default_sections = [
         "defaults_section",
         "atom_types_section",
@@ -172,16 +268,16 @@ class TopFile(AbstractParameterFile):
             raise TypeError(
                 'Expected {0} to be an instance of type PairsList. Initiate a new PairsList object using PairsList()')
         else:
-            self.pairs = PairsList()
+            pass
 
-        if isinstance(potential, AbstractPotential):
+        if isinstance(potential(), AbstractPotential):
             self.potential = potential
         elif potential:
             raise TypeError(
                 'Expected {0} to inherit from AbstractPotential. \
                 Initiate a new AbstractPotential object using AbstractPotential()')
         else:
-            self.potential = LennardJonesPotential
+            pass
 
         self.pairs_section = PairsSection(self.pairs, self.potential)
 
@@ -191,16 +287,22 @@ class TopFile(AbstractParameterFile):
     def __setattr__(self, key, value):
         if key == 'pairs':
             isinstance(value, PairsList)
-            self.pairs_section = PairsSection(value)
+            self.pairs_section = PairsSection(value, self.potential)
         if key == 'potential':
-            isinstance(value, AbstractPotential)
+            isinstance(value(), AbstractPotential)
             self.pairs_section = PairsSection(self.pairs, value)
         super(TopFile, self).__setattr__(key, value)
 
-    def save(self):
-        super(TopFile, self).save()
+    def save(self, path):
+        super(TopFile, self).save(path)
 
     def built(self):
-        output = "\n\n".join([self.__getattribute__(key).write() for key in self.default_sections])
+        output = "\n\n".join([self.__getattribute__(key).contents for key in self.default_sections])
         for line in output.split('\n'):
             print(line)
+
+    def load(self, path):
+        super(TopFile, self).load(path)
+        print(self.data)
+        for key in self.default_sections:
+            self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]['values']

@@ -63,13 +63,13 @@ from sbmtools.pairs import PairsList, AtomPair
 p1 = PairsList([ap1, ap2, ap3, ap4])
 p2 = PairsList([ap1, ap2, ap5])
 
-# addition
+# add pairs
 p3 = p1 + p2           # returns PairsList([ap1, ap2, ap3, ap4, ap1, ap2, ap5])
 p3 = p1.add(p2)        # returns PairsList([ap1, ap2, ap3, ap4, ap1, ap2, ap5])
 
-# subtraction (behaves as set difference)
+# remove pairs (behaves as set difference)
 p3 = p1 - p2           # returns PairsList([ap3, ap4])
-p3 = p1.difference(p2) # returns PairsList([ap3, ap4])
+p3 = p1.remove(p2) # returns PairsList([ap3, ap4])
 
 ```
 

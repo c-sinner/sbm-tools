@@ -1,31 +1,42 @@
+class AbstractParameterFileParser(object):
+    def __init__(self, data=None):
+        self.data = data
+
+    def parse(self):
+        raise NotImplementedError
+
+
 class AbstractParameterFile(object):
-    def __init__(self):
-        pass
+    parser = AbstractParameterFileParser
+
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
+        self.data = ''
 
     def __str__(self):
         super(AbstractParameterFile, self).__str__()
 
-    def setup(self, *args, **kwargs):
-        """Initialize attributes shared by all view methods."""
-        if hasattr(self, 'get') and not hasattr(self, 'head'):
-            self.head = self.get
-        self.args = args
-        self.kwargs = kwargs
-
     def built(self):
         raise NotImplementedError
 
-    def save(self):
+    def save(self, path):
         output = self.built()
-        raise NotImplementedError
+        output_stream = open(path, 'w')
+        output_stream.write(output)
+        output_stream.close()
+
+    def load(self, path):
+        with open(path, 'r') as input_stream:
+            data = input_stream.read()
+        self.data = self.parser(data).parse()
 
 
 class AbstractParameterFileSection(object):
-    title = ''
 
     def __str__(self):
         super(AbstractParameterFileSection, self).__str__()
 
-    def write(self):
+    @property
+    def contents(self):
         raise NotImplementedError
-

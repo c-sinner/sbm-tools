@@ -1,5 +1,3 @@
-
-
 class AbstractPotential(object):
     def __init__(self, pair=None, **kwargs):
         self.format = ''
@@ -12,7 +10,7 @@ class AbstractPotential(object):
         raise NotImplementedError
 
 
-class BondPotential(object):
+class BondPotential(AbstractPotential):
     header = ';ai     aj      func    r0(nm)  Kb'
     format = '{index:6d} {partner:6d} {ftype:d}  {dist:.8E} {kb:.8E}'
     strength = 0.200000000E+05
@@ -23,7 +21,7 @@ class BondPotential(object):
 
     def apply(self):
         return {
-            "index": self.pair.index,  #TODO: index might clash with builtins
+            "index": self.pair.index,
             "partner": self.pair.partner,
             "ftype": self.function_type,
             "dist": self.pair.distance,
@@ -33,7 +31,7 @@ class BondPotential(object):
 
 class LennardJonesPotential(AbstractPotential):
     header = '; i j type and weight'
-    format = '{index:6d} {partner:6d} {ftype:d}  {c6:.5E} {c12:.5E}'
+    format = '{index:6d} {partner:7d} {ftype:d}  {c6:.9E} {c12:.9E}'
     function_type = 1
 
     def __init__(self, pair=None):
@@ -41,7 +39,7 @@ class LennardJonesPotential(AbstractPotential):
 
     def apply(self):
         return {
-            "index": self.pair.index,  #TODO: index might clash with builtins
+            "index": self.pair.index,
             "partner": self.pair.partner,
             "ftype": self.function_type,
             "c6": 2 * self.pair.distance**6,
@@ -50,16 +48,17 @@ class LennardJonesPotential(AbstractPotential):
 
 
 class C10Potential(AbstractPotential):
-    def __init__(self, other=None):
+    header = '; i j type and weight'
+    format = '{index:6d} {partner:6d} {ftype:d}  {c10:.5E} {c12:.5E}'
+    function_type = 1
+
+    def __init__(self, pair=None):
         super(C10Potential, self).__init__()
-        self.other = other
-        self.header = '; i j type and weight'
-        self.format = '{index:6d} {partner:6d} {ftype:d}  {c10:.5E} {c12:.5E}'
-        self.function_type = 1
+        self.pair = pair
 
     def apply(self):
         return {
-            "index": self.pair.index,  #TODO: index might clash with builtins
+            "index": self.pair.index,
             "partner": self.pair.partner,
             "function_type": self.function_type,
             "c10": 6 * self.pair.distance**10,

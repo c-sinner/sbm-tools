@@ -88,7 +88,7 @@ class PairsList(list):
     def intersection(self, other):
         return PairsList([element for element in self._data if element in list(other)])
 
-    def difference(self, other):
+    def remove(self, other):
         return self - other
 
     def symmetric_difference(self, other):
