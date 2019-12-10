@@ -9,5 +9,5 @@ setup(name='sbmtools',
       author='Claude Sinner',
       author_email='claude.sinner@utdallas.edu',
       license='GPLv3',
-      packages=['sbmtools', 'tests'],
+      packages=['sbmtools', 'test'],
       zip_safe=False)

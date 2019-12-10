@@ -12,7 +12,7 @@ class AbstractPotential(object):
 
 class BondPotential(AbstractPotential):
     header = ';ai     aj      func    r0(nm)  Kb'
-    format = '{index:6d} {partner:6d} {ftype:d}  {dist:.8E} {kb:.8E}'
+    format = '{index:6d} {partner:6d} {ftype:d}  {distance:.8E} {kb:.8E}'
     strength = 0.200000000E+05
     function_type = 1
 
@@ -24,7 +24,7 @@ class BondPotential(AbstractPotential):
             "index": self.pair.index,
             "partner": self.pair.partner,
             "ftype": self.function_type,
-            "dist": self.pair.distance,
+            "distance": self.pair.distance,
             "kb": self.strength,
         }
 
@@ -32,6 +32,13 @@ class BondPotential(AbstractPotential):
 class LennardJonesPotential(AbstractPotential):
     header = '; i j type and weight'
     format = '{index:6d} {partner:7d} {ftype:d}  {c6:.9E} {c12:.9E}'
+    fields = [
+        "index",
+        "partner",
+        "ftype",
+        "c6",
+        "c12",
+    ]
     function_type = 1
 
     def __init__(self, pair=None):
@@ -42,8 +49,8 @@ class LennardJonesPotential(AbstractPotential):
             "index": self.pair.index,
             "partner": self.pair.partner,
             "ftype": self.function_type,
-            "c6": 2 * self.pair.distance**6,
-            "c12": self.pair.distance**12,
+            "c6": 2 * self.pair.distance ** 6,
+            "c12": self.pair.distance ** 12,
         }
 
 
@@ -61,7 +68,6 @@ class C10Potential(AbstractPotential):
             "index": self.pair.index,
             "partner": self.pair.partner,
             "function_type": self.function_type,
-            "c10": 6 * self.pair.distance**10,
-            "c12": 5 * self.pair.distance**12,
+            "c10": 6 * self.pair.distance ** 10,
+            "c12": 5 * self.pair.distance ** 12,
         }
-

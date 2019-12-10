@@ -1,0 +1,49 @@
+; Automated top file generation of a structure based model for PDB ID 2CI2 by pythonBioPackage, 2012-9-3 164903
+ [ defaults ]
+ ;nbfunc comb-rule gen-pairs
+1 1 no
+
+ [ atomtypes ]
+ ;name  mass     charge   ptype c6       c12
+ CA       1.000     0.000 A     0.000  1.67772160E-05
+
+ [ moleculetype ]
+ ;name   nrexcl
+Macromolecule 3
+
+ [ atoms ]
+ ;nr  type  resnr residue atom  cgnr charge  mass
+    1  CA       1 ASN   CA       1   0.000   1.000
+
+ [ pairs ]
+ ; i j type and weight
+     2     45 1  8.67324E+00 7.78048E+00
+
+;DOUBLED PAIRS SECTION
+ [ pairs ]
+ ; i j type and weight
+     2      2 1  8.67324E+00 7.78048E+00
+
+ [ bonds ]
+ ;ai     aj      func    r0(nm)  Kb
+      1      2 1  3.80269060E-01  2.00000000E+04
+
+ [ exclusions ]
+ ;ai     aj
+      2     45
+
+ [ angles ]
+ ;ai  aj   ak  func  th0(deg)   Ka
+      1      2      3 1  1.40393217E+02  4.00000000E+01
+
+ [ dihedrals ]
+ ;ai  aj  ak  al  func  phi0(deg)   Kd(kJ/mol)  mult
+      1      2      3      4 1  3.97213147E+02  1.00000000E+00  1
+
+ [ system ]
+ ;name
+Macromolecule
+
+ [ molecules ]
+ ;name   #molec
+Macromolecule 1

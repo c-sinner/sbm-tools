@@ -22,19 +22,35 @@ class TopFileParser(AbstractParameterFileParser):
         def flatten(list_of_lists):
             return [item for sublist in list_of_lists for item in sublist]
 
+        def to_numeric(list_of_lists):
+            result = []
+            for item in list_of_lists:
+                if isinstance(item, list):
+                    result.append(to_numeric(item))
+                else:
+                    try:
+                        result.append(int(item))
+                    except:
+                        try:
+                            result.append(float(item))
+                        except:
+                            result.append(item)
+            return result
+
         unique_keys = []
         [unique_keys.append(x['title']) for x in sections_list if x['title'] not in unique_keys]
 
         processed = {}
         for unique_key in unique_keys:
             processed[unique_key] = flatten(
-                [section['values'] for section in sections_list if section['title'] == unique_key])
+                to_numeric(
+                    [section['values'] for section in sections_list if section['title'] == unique_key]))
 
         return processed
 
     @staticmethod
     def preprocess_data(data):
-        return re.sub(r';.*\n', '', data)
+        return re.sub(r';.*(\n|$)', '', data)
 
     def parse_sections(self, data):
         return list(map(self.parse_section, re.findall(self.sections_regex, data, re.MULTILINE)))
@@ -50,7 +66,7 @@ class TopFileParser(AbstractParameterFileParser):
 
 
 class AbstractTopFileSection(AbstractParameterFileSection):
-    title_format = '[ {0} ]'
+    title_format = ' [ {0} ]'
     header_format = ';'
     line_format = ''
     _title = ''
@@ -97,7 +113,6 @@ class AbstractTopFileSection(AbstractParameterFileSection):
         self._values = value
 
     def prepare_line(self, line):
-        print(line)
         if isinstance(line, dict):
             return line
         else:
@@ -118,8 +133,8 @@ class DefaultsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'defaults'
-        self.header_format = ';{nbfunc} {comb-rule} {gen-pairs}'
-        self.line_format = '{nbfunc:05d} {comb-rule:5d} {gen-pairs:10s}'
+        self.header_format = ';{nbfunc:12s} {comb-rule:12s} {gen-pairs:5s}'
+        self.line_format = '{nbfunc:12d} {comb-rule:12d} {gen-pairs:5s}'
         self.fields = [
             'nbfunc',
             'comb-rule',
@@ -132,7 +147,8 @@ class AtomTypesSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'atomtypes'
-        self.header_format = ';{name}  {mass}     {charge}   {ptype} {c6}       {c12}'
+        self.header_format = ';{name} {mass:6s} {charge:6s} {ptype:4s} {c6:10s} {c12:10s}'
+        self.line_format = '{name} {mass:5.1f} {charge:5.1f} {ptype:4s} {c6:.10E} {c12:10E}'
         self.fields = [
             'name',
             'mass',
@@ -148,7 +164,8 @@ class MoleculeTypeSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'moleculetype'
-        self.header_format = ';{name:10s}     {nrexcl}'
+        self.header_format = ';{name:9s} {nrexcl}'
+        self.line_format = '{name:10s} {nrexcl}'
         self.fields = [
             'name',
             'nrexcl'
@@ -160,6 +177,18 @@ class AtomsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'atoms'
+        self.header_format =';{row_number} {type} {residue_number} {residue} {atom_type} {charge_number} {charge} {mass}'
+        self.line_format = '{row_number:6d} {type:2s} {residue_number:6d} {residue:4s} {atom_type:3s} {charge_number:6d} {charge:3.3f} {mass:3.3f}'
+        self.fields = [
+            'row_number',
+            'type',
+            'residue_number',
+            'residue',
+            'atom_type',
+            'charge_number',
+            'charge',
+            'mass'
+        ]
 
 
 class PairsSection(AbstractTopFileSection):
@@ -171,6 +200,7 @@ class PairsSection(AbstractTopFileSection):
         self.title = 'pairs'
         self.header_format = self.potential.header
         self.line_format = self.potential.format
+        self.fields = self.potential.fields
         self.values = self.get_values()
 
     def get_values(self):
@@ -181,31 +211,60 @@ class BondsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'bonds'
+        self.header_format = ';{index} {partner} {ftype}   {distance}   {kb}'
+        self.line_format = '{index:6d} {partner:6d} {ftype:d}   {distance:.10E}   {kb:.10E}'
+        self.fields = ['index', 'partner', 'ftype', 'distance', 'kb']
 
 
 class ExclusionsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'exclusions'
+        self.header_format = ';{index} {partner}'
+        self.line_format = '{index:6d} {partner:6d}'
+        self.fields = [
+            'index',
+            'partner'
+        ]
 
 
 class AnglesSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'angles'
-
+        self.header_format = ';{ai:6s} {aj:6s} {ak:6s} {ftype:1s}    {th0dg:10s}    {ka:10s}'
+        self.line_format = '{ai:6d} {aj:6d} {ak:6d} {ftype:1d}   {th0dg:10E}    {ka:10E}'
+        self.fields = [
+            'ai',
+            'aj',
+            'ak',
+            'ftype',
+            'th0dg',
+            'ka'
+        ]
 
 class DihedralsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'dihedrals'
-
+        self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {al:>6s} {ftype:5s} {phi0dg:>10s}    {kd:>11s} {mult}'
+        self.line_format = '{ai:6d} {aj:6d} {ak:6d} {al:6d} {ftype:1d}   {phi0dg:10E}   {kd:10E} {mult:1d}'
+        self.fields = [
+            'ai',
+            'aj',
+            'ak',
+            'al',
+            'ftype',
+            'phi0dg',
+            'kd',
+            'mult'
+        ]
 
 class SystemSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'system'
-        self.header_format = '{name}'
+        self.header_format = ';{name}'
         self.line_format = '{name}'
         self.fields = [
             'name',
@@ -217,8 +276,8 @@ class MoleculesSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'molecules'
-        self.header_format = '{name}'
-        self.line_format = '{name}'
+        self.header_format = ';{name:15s} {#molec}'
+        self.line_format = '{name:16s} {#molec}'
         self.fields = [
             'name',
             '#molec'
@@ -255,11 +314,13 @@ class TopFile(AbstractParameterFile):
         "angles_section": AnglesSection(),
         "dihedrals_section": DihedralsSection(),
         "system_section": SystemSection(),
-        "molecules_section": MoleculeTypeSection()
+        "molecules_section": MoleculesSection()
     }
 
-    def __init__(self, pairs=None, potential=None, **kwargs):
+    def __init__(self, pairs=None, potential=LennardJonesPotential, **kwargs):
         super().__init__()
+        if pairs is None:
+            pairs = PairsList()
         kwargs = {**self.default_kwargs, **kwargs}
 
         if isinstance(pairs, PairsList):
@@ -303,6 +364,5 @@ class TopFile(AbstractParameterFile):
 
     def load(self, path):
         super(TopFile, self).load(path)
-        print(self.data)
         for key in self.default_sections:
-            self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]['values']
+            self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]

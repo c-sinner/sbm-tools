@@ -31,7 +31,7 @@ class TestPairs(unittest.TestCase):
         p3 = p1.add(p2)
         self.assertEqual(p3, PairsList([ap1, ap2, ap3, ap4, ap1, ap2, ap5]))
 
-    def test_subtraction(self):
+    def test_remove(self):
         ap1 = AbstractAtomPair(1, 2)
         ap2 = AbstractAtomPair(2, 2)
         ap3 = AbstractAtomPair(3, 2)
@@ -44,7 +44,7 @@ class TestPairs(unittest.TestCase):
         p3 = p1 - p2
         self.assertEqual(p3, PairsList([ap3, ap4]))
 
-        p3 = p1.difference(p2)
+        p3 = p1.remove(p2)
         self.assertEqual(p3, PairsList([ap3, ap4]))
 
     def test_union(self):
