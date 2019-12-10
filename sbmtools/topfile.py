@@ -1,3 +1,6 @@
+import uuid
+from datetime import date
+
 from sbmtools import PairsList, AbstractParameterFileParser
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFileSection, AbstractParameterFile
@@ -133,8 +136,8 @@ class DefaultsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'defaults'
-        self.header_format = ';{nbfunc:12s} {comb-rule:12s} {gen-pairs:5s}'
-        self.line_format = '{nbfunc:12d} {comb-rule:12d} {gen-pairs:5s}'
+        self.header_format = ';{nbfunc:>11s} {comb-rule:>12s} {gen-pairs}'
+        self.line_format = '{nbfunc:12d} {comb-rule:12d} {gen-pairs}'
         self.fields = [
             'nbfunc',
             'comb-rule',
@@ -147,8 +150,8 @@ class AtomTypesSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'atomtypes'
-        self.header_format = ';{name} {mass:6s} {charge:6s} {ptype:4s} {c6:10s} {c12:10s}'
-        self.line_format = '{name} {mass:5.1f} {charge:5.1f} {ptype:4s} {c6:.10E} {c12:10E}'
+        self.header_format = ';{name:5s} {mass:<7s} {charge:>5s} {ptype:5s} {c6:>4s} {c12:<12s}'
+        self.line_format = ' {name:5s} {mass:<8.3f} {charge:<5.3f} {ptype:<4s} {c6:.3f} {c12:10E}'
         self.fields = [
             'name',
             'mass',
@@ -164,8 +167,8 @@ class MoleculeTypeSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'moleculetype'
-        self.header_format = ';{name:9s} {nrexcl}'
-        self.line_format = '{name:10s} {nrexcl}'
+        self.header_format = ';{name:22s} {nrexcl}'
+        self.line_format = '{name:23s} {nrexcl}'
         self.fields = [
             'name',
             'nrexcl'
@@ -177,15 +180,15 @@ class AtomsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'atoms'
-        self.header_format =';{row_number} {type} {residue_number} {residue} {atom_type} {charge_number} {charge} {mass}'
-        self.line_format = '{row_number:6d} {type:2s} {residue_number:6d} {residue:4s} {atom_type:3s} {charge_number:6d} {charge:3.3f} {mass:3.3f}'
+        self.header_format = ';{nr:>5s} {type} {resnr} {res:>4s} {atom:>5s} {cgnr} {charge} {mass}'
+        self.line_format = '{nr:6d} {type:2s} {resnr:7d} {res:>4s} {atom:>3s} {cgnr:6d} {charge:>8.3f} {mass:>8.3f}'
         self.fields = [
-            'row_number',
+            'nr',
             'type',
-            'residue_number',
-            'residue',
-            'atom_type',
-            'charge_number',
+            'resnr',
+            'res',
+            'atom',
+            'cgnr',
             'charge',
             'mass'
         ]
@@ -204,6 +207,9 @@ class PairsSection(AbstractTopFileSection):
         self.values = self.get_values()
 
     def get_values(self):
+        values = super(PairsSection, self).get_values()  # don't forget to return values if they are set externally
+        if values:
+            return values
         return [getattr(potential, 'apply')() for potential in map(self.potential, self.pairs)]
 
 
@@ -220,11 +226,11 @@ class ExclusionsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'exclusions'
-        self.header_format = ';{index} {partner}'
-        self.line_format = '{index:6d} {partner:6d}'
+        self.header_format = ';{ai:>5s} {aj:>6s}'
+        self.line_format = '{ai:6d} {aj:6d}'
         self.fields = [
-            'index',
-            'partner'
+            'ai',
+            'aj'
         ]
 
 
@@ -232,7 +238,7 @@ class AnglesSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'angles'
-        self.header_format = ';{ai:6s} {aj:6s} {ak:6s} {ftype:1s}    {th0dg:10s}    {ka:10s}'
+        self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {ftype:5s} {th0dg:>10s} {ka:>15s}'
         self.line_format = '{ai:6d} {aj:6d} {ak:6d} {ftype:1d}   {th0dg:10E}    {ka:10E}'
         self.fields = [
             'ai',
@@ -243,12 +249,13 @@ class AnglesSection(AbstractTopFileSection):
             'ka'
         ]
 
+
 class DihedralsSection(AbstractTopFileSection):
     def __init__(self):
         super().__init__()
         self.title = 'dihedrals'
-        self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {al:>6s} {ftype:5s} {phi0dg:>10s}    {kd:>11s} {mult}'
-        self.line_format = '{ai:6d} {aj:6d} {ak:6d} {al:6d} {ftype:1d}   {phi0dg:10E}   {kd:10E} {mult:1d}'
+        self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {al:>6s} {ftype:5s} {phi0dg:>13s} {kd:>17s} {mult}'
+        self.line_format = '{ai:6d} {aj:6d} {ak:6d} {al:6d} {ftype:1d} {phi0dg:17.9E} {kd:17.9E} {mult:1d}'
         self.fields = [
             'ai',
             'aj',
@@ -259,6 +266,7 @@ class DihedralsSection(AbstractTopFileSection):
             'kd',
             'mult'
         ]
+
 
 class SystemSection(AbstractTopFileSection):
     def __init__(self):
@@ -354,11 +362,16 @@ class TopFile(AbstractParameterFile):
             self.pairs_section = PairsSection(self.pairs, value)
         super(TopFile, self).__setattr__(key, value)
 
+    def get_header(self):
+        return '; Automated top file generated by sbmtools on the {0} with uuid {1}'.format(date.today().isoformat(),
+                                                                                            uuid.uuid4().hex)
+
     def save(self, path):
         super(TopFile, self).save(path)
 
     def built(self):
-        output = "\n\n".join([self.__getattribute__(key).contents for key in self.default_sections])
+        output = "\n\n".join(
+            [self.get_header()] + [self.__getattribute__(key).contents for key in self.default_sections])
         for line in output.split('\n'):
             print(line)
 

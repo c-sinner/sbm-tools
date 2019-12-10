@@ -30,11 +30,11 @@ class BondPotential(AbstractPotential):
 
 
 class LennardJonesPotential(AbstractPotential):
-    header = '; i j type and weight'
-    format = '{index:6d} {partner:7d} {ftype:d}  {c6:.9E} {c12:.9E}'
+    header = ';   ai     aj ftype             c6                c12'
+    format = '{ai:6d} {ai:6d} {ftype:d} {c6:18.9E} {c12:18.9E}'
     fields = [
-        "index",
-        "partner",
+        "ai",
+        "aj",
         "ftype",
         "c6",
         "c12",
