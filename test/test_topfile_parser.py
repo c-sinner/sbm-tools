@@ -5,7 +5,7 @@ from sbmtools import TopFileParser
 class TestTopFileParser(unittest.TestCase):
     def __init__(self, *args, **kwargs):
         super(TestTopFileParser, self).__init__(*args, **kwargs)
-        with open('./files/start.top') as top_file:
+        with open('./files/external_top_file.top') as top_file:
             self.data = top_file.read()
 
     def setUp(self):

@@ -10,6 +10,7 @@ class AbstractParameterFile(object):
     parser = AbstractParameterFileParser
 
     def __init__(self, *args, **kwargs):
+        super(AbstractParameterFile, self).__init__(*args, **kwargs)
         self.args = args
         self.kwargs = kwargs
         self.data = ''
