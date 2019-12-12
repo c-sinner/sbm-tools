@@ -11,6 +11,9 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     attribute_delimiter = '\n'
     line_delimiter = '\n'
 
+    def __init__(self, *args, **kwargs):
+        super(AbstractTopFileSection, self).__init__(*args, **kwargs)
+
     @property
     def contents(self):
         return self.attribute_delimiter.join([
@@ -66,8 +69,8 @@ class AbstractTopFileSection(AbstractParameterFileSection):
 
 
 class DefaultsSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'defaults'
         self.header_format = ';{nbfunc:>11s} {comb-rule:>12s} {gen-pairs}'
         self.line_format = '{nbfunc:12d} {comb-rule:12d} {gen-pairs}'
@@ -80,8 +83,8 @@ class DefaultsSection(AbstractTopFileSection):
 
 
 class AtomTypesSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'atomtypes'
         self.header_format = ';{name:5s} {mass:<7s} {charge:>5s} {ptype:5s} {c6:>4s} {c12:<12s}'
         self.line_format = ' {name:5s} {mass:<8.3f} {charge:<5.3f} {ptype:<4s} {c6:.3f} {c12:10E}'
@@ -93,12 +96,12 @@ class AtomTypesSection(AbstractTopFileSection):
             'c6',
             'c12',
         ]
-        self.values = []
+        self.values = [[]]
 
 
 class MoleculeTypeSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'moleculetype'
         self.header_format = ';{name:22s} {nrexcl}'
         self.line_format = '{name:23s} {nrexcl}'
@@ -110,8 +113,8 @@ class MoleculeTypeSection(AbstractTopFileSection):
 
 
 class AtomsSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'atoms'
         self.header_format = ';{nr:>5s} {type} {resnr} {res:>4s} {atom:>5s} {cgnr} {charge} {mass}'
         self.line_format = '{nr:6d} {type:2s} {resnr:7d} {res:>4s} {atom:>3s} {cgnr:6d} {charge:>8.3f} {mass:>8.3f}'
@@ -128,8 +131,8 @@ class AtomsSection(AbstractTopFileSection):
 
 
 class PairsSection(AbstractTopFileSection):
-    def __init__(self, pairs, potential):
-        super().__init__()
+    def __init__(self, pairs, potential, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.pairs = pairs
         self.potential = potential
 
@@ -147,8 +150,8 @@ class PairsSection(AbstractTopFileSection):
 
 
 class BondsSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'bonds'
         self.header_format = ';{index} {partner} {ftype}   {distance}   {kb}'
         self.line_format = '{index:6d} {partner:6d} {ftype:d}   {distance:.10E}   {kb:.10E}'
@@ -156,8 +159,8 @@ class BondsSection(AbstractTopFileSection):
 
 
 class ExclusionsSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'exclusions'
         self.header_format = ';{ai:>5s} {aj:>6s}'
         self.line_format = '{ai:6d} {aj:6d}'
@@ -168,8 +171,8 @@ class ExclusionsSection(AbstractTopFileSection):
 
 
 class AnglesSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'angles'
         self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {ftype:5s} {th0dg:>10s} {ka:>15s}'
         self.line_format = '{ai:6d} {aj:6d} {ak:6d} {ftype:1d}   {th0dg:10E}    {ka:10E}'
@@ -184,8 +187,8 @@ class AnglesSection(AbstractTopFileSection):
 
 
 class DihedralsSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'dihedrals'
         self.header_format = ';{ai:>5s} {aj:>6s} {ak:>6s} {al:>6s} {ftype:5s} {phi0dg:>13s} {kd:>17s} {mult}'
         self.line_format = '{ai:6d} {aj:6d} {ak:6d} {al:6d} {ftype:1d} {phi0dg:17.9E} {kd:17.9E} {mult:1d}'
@@ -202,8 +205,8 @@ class DihedralsSection(AbstractTopFileSection):
 
 
 class SystemSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'system'
         self.header_format = ';{name}'
         self.line_format = '{name}'
@@ -214,8 +217,8 @@ class SystemSection(AbstractTopFileSection):
 
 
 class MoleculesSection(AbstractTopFileSection):
-    def __init__(self):
-        super().__init__()
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.title = 'molecules'
         self.header_format = ';{name:15s} {#molec}'
         self.line_format = '{name:16s} {#molec}'

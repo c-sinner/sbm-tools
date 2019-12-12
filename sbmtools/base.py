@@ -44,6 +44,9 @@ class AbstractParameterFile(object):
 
 class AbstractParameterFileSection(object):
 
+    def __init__(self, *args, **kwargs):
+        super(AbstractParameterFileSection, self).__init__(*args, **kwargs)
+
     def __str__(self):
         super(AbstractParameterFileSection, self).__str__()
 

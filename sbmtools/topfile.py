@@ -1,6 +1,3 @@
-import uuid
-from datetime import date
-
 from sbmtools import AtomPair, PairsList, AbstractParameterFileParser
 from sbmtools.atoms import AtomsList
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
@@ -22,14 +19,14 @@ class TopFileBase(object):
         self._dihedrals = PairsList()
         
     def display(self):
-        return [
-            self._atoms,
-            self._pairs,
-            self._bonds,
-            self._exclusions,
-            self._angles,
-            self._dihedrals,
-        ]
+        return {
+            'atoms': self._atoms,
+            'pairs': self._pairs,
+            'bonds': self._bonds,
+            'exclusions': self._exclusions,
+            'angles': self._angles,
+            'dihedrals': self._dihedrals,
+        }
 
     @property
     def atoms(self):
@@ -92,8 +89,7 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
         return self.postprocess_result(self.parse_sections(self.preprocess_data(self.data)))
 
     # handle same titles
-    @staticmethod
-    def postprocess_result(sections_list):
+    def postprocess_result(self, sections_list):
         def flatten(list_of_lists):
             return [item for sublist in list_of_lists for item in sublist]
 
@@ -121,6 +117,8 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
                 to_numeric(
                     [section['values'] for section in sections_list if section['title'] == unique_key]))
 
+        processed.update(self.display())
+
         return processed
 
     @staticmethod
@@ -144,15 +142,15 @@ class TopFile(TopFileBase, AbstractParameterFile):
     potential = LennardJonesPotential
     parser = TopFileParser
 
-    defaults_section = DefaultsSection(),
-    atom_types_section = AtomTypesSection(),
-    molecule_type_section = MoleculeTypeSection(),
-    atoms_section = AtomsSection(),
-    bonds_section = BondsSection(),
-    exclusions_section = ExclusionsSection(),
-    angles_section = AnglesSection(),
-    dihedrals_section = DihedralsSection(),
-    system_section = SystemSection(),
+    defaults_section = DefaultsSection()
+    atom_types_section = AtomTypesSection()
+    molecule_type_section = MoleculeTypeSection()
+    atoms_section = AtomsSection()
+    bonds_section = BondsSection()
+    exclusions_section = ExclusionsSection()
+    angles_section = AnglesSection()
+    dihedrals_section = DihedralsSection()
+    system_section = SystemSection()
     molecules_section = MoleculesSection()
 
     default_sections = [
@@ -169,9 +167,7 @@ class TopFile(TopFileBase, AbstractParameterFile):
         "molecules_section",
     ]
 
-    __meta__ = "hhmmm"
-
-    def __init__(self, pairs=None, potential=LennardJonesPotential, **kwargs):
+    def __init__(self, pairs=None, potential=LennardJonesPotential, *args, **kwargs):
         super().__init__()
 
         if isinstance(pairs, PairsList):
@@ -205,41 +201,45 @@ class TopFile(TopFileBase, AbstractParameterFile):
     @TopFileBase.atoms.setter
     def atoms(self, value):
         #super(TopFile, self).__setattr__('atoms', value)  # This needs a parser first
-        print(self.atoms_section)
-        self.atoms_section[0].values = value
+        self._atoms = value
+        self.atoms_section.values = value
 
     @TopFileBase.pairs.setter
     def pairs(self, value):
         #super(TopFile, self).__setattr__('pairs', value)
-        print(value)
-        self.pairs_section = PairsSection([AtomPair(*val[:3]) for val in value], self.potential)
+        self._pairs = value
+        self.pairs_section = PairsSection(value, self.potential)
 
     @TopFileBase.bonds.setter
     def bonds(self, value):
         #super(TopFile, self).__setattr__('bonds', value)  # This needs a parser first
-        self.bonds_section[0].values = value
+        self._bonds = value
+        self.bonds_section.values = value
 
     @TopFileBase.exclusions.setter
     def exclusions(self, value):
         #super(TopFile, self).__setattr__('exclusions', value)  # This needs a parser first
-        self.exclusions_section[0].values = value
+        self._exclusions = value
+        self.exclusions_section.values = value
 
     @TopFileBase.angles.setter
     def angles(self, value):
         #super(TopFile, self).__setattr__('angles', value)  # This needs a parser first
-        self.angles_section[0].values = value
+        self._angles = value
+        self.angles_section.values = value
 
     @TopFileBase.dihedrals.setter
     def dihedrals(self, value):
         #super(TopFile, self).__setattr__('dihedrals', value)  # This needs a parser first
-        self.dihedrals_section[0].values = value
+        self._dihedrals = value
+        self.dihedrals_section.values = value
 
     def save(self, path):
         super(TopFile, self).save(path)
 
     def built(self):
         output = "\n\n".join(
-            [self.get_header()] + [self.__getattribute__(key)[0].contents for key in self.default_sections])
+            [self.get_header()] + [self.__getattribute__(key).contents for key in self.default_sections])
         for line in output.split('\n'):
             print(line)
 
@@ -252,13 +252,13 @@ class TopFile(TopFileBase, AbstractParameterFile):
         self.angles = self.data['angles']
         self.dihedrals = self.data['dihedrals']
 
-        self.defaults_section[0].values = self.data['defaults'],
-        self.atom_types_section[0].values = self.data['atomtypes'],
-        self. molecule_type_section[0].values = self.data['moleculetype'],
-        self.system_section[0].values = self.data['system'],
+        self.defaults_section.values = self.data['defaults'],
+        self.atom_types_section.values = self.data['atomtypes'],
+        self.molecule_type_section.values = self.data['moleculetype'],
+        self.system_section.values = self.data['system'],
         self.molecules_section.values = self.data['molecules']
-        
+
         #for key in self.default_sections:
-        #    
+        #
         #    self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]
         #    #self.__getattribute__(key)[0].values = self.data[self.__getattribute__(key)[0].unformatted_title]
