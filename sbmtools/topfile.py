@@ -1,5 +1,5 @@
-from sbmtools import AtomPair, PairsList, AbstractParameterFileParser
-from sbmtools.atoms import AtomsList
+from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomPair
+from sbmtools.atoms import AtomsList, Atom
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFile
 import re
@@ -17,8 +17,8 @@ class TopFileBase(object):
         self._exclusions = PairsList()
         self._angles = PairsList()
         self._dihedrals = PairsList()
-        
-    def display(self):
+
+    def export(self):
         return {
             'atoms': self._atoms,
             'pairs': self._pairs,
@@ -51,7 +51,7 @@ class TopFileBase(object):
     @bonds.setter
     def bonds(self, value):
         self._bonds = value
-        
+
     @property
     def exclusions(self):
         return self._exclusions
@@ -67,7 +67,7 @@ class TopFileBase(object):
     @angles.setter
     def angles(self, value):
         self._angles = value
-        
+
     @property
     def dihedrals(self):
         return self._dihedrals
@@ -75,6 +75,56 @@ class TopFileBase(object):
     @dihedrals.setter
     def dihedrals(self, value):
         self._dihedrals = value
+
+
+class TopFileSectionParser(object):
+    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
+    line_delimiter = '\n'
+
+    def __init__(self):
+        self.title = ''
+        self.values = []
+        self.objects = []
+
+    def export(self):
+        return {'title': self.title, 'values': self.values, 'objects': self.objects}
+
+    def parse(self, data):
+        self.title = self.find_title(data)
+        self.values = self.process_content(data)
+        self.objects = self.process_values()
+        return self.export()
+
+    def find_title(self, data):
+        m = re.match(self.title_regex, data)
+        if m:
+            return m.group(1)
+        return ''
+
+    def convert_numericals(self, items):
+        result = []
+        for item in items:
+            try:
+                result.append(int(item))
+            except:
+                try:
+                    result.append(float(item))
+                except:
+                    result.append(item)
+        return result
+
+    def process_content(self, data):
+        return [self.convert_numericals(line.split()) for line in data.split(self.line_delimiter)[1:] if line]
+
+    def process_values(self):
+        if self.title == 'pairs':
+            return PairsList([AtomPair(value[0], value[1], 0.8) for value in self.values])
+        elif isinstance(self.values[0][0], int) and isinstance(self.values[0][1], int):
+            return PairsList([AbstractAtomPair(value[0], value[1]) for value in self.values])
+        elif isinstance(self.values[0][0], int):
+            return AtomsList([Atom(value[0]) for value in self.values])
+        else:
+            return []
 
 
 class TopFileParser(TopFileBase, AbstractParameterFileParser):
@@ -86,38 +136,22 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
         super(TopFileParser, self).__init__(data)
 
     def parse(self):
-        return self.postprocess_result(self.parse_sections(self.preprocess_data(self.data)))
+        return self.postprocess_result(self.find_sections(self.preprocess_data(self.data)))
 
     # handle same titles
     def postprocess_result(self, sections_list):
         def flatten(list_of_lists):
             return [item for sublist in list_of_lists for item in sublist]
-
-        def to_numeric(list_of_lists):
-            result = []
-            for item in list_of_lists:
-                if isinstance(item, list):
-                    result.append(to_numeric(item))
-                else:
-                    try:
-                        result.append(int(item))
-                    except:
-                        try:
-                            result.append(float(item))
-                        except:
-                            result.append(item)
-            return result
-
+        #TODO: FIX THIS WITH REDUCE
         unique_keys = []
         [unique_keys.append(x['title']) for x in sections_list if x['title'] not in unique_keys]
 
         processed = {}
         for unique_key in unique_keys:
             processed[unique_key] = flatten(
-                to_numeric(
-                    [section['values'] for section in sections_list if section['title'] == unique_key]))
+                    [section['values'] for section in sections_list if section['title'] == unique_key])
 
-        processed.update(self.display())
+        processed.update(self.export())
 
         return processed
 
@@ -125,17 +159,13 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
     def preprocess_data(data):
         return re.sub(r';.*(\n|$)', '', data)
 
-    def parse_sections(self, data):
+    @staticmethod
+    def parse_section(section):
+        section_parser = TopFileSectionParser()
+        return section_parser.parse(section)
+
+    def find_sections(self, data):
         return list(map(self.parse_section, re.findall(self.sections_regex, data, re.MULTILINE)))
-
-    def parse_section(self, section):
-        m = re.match(self.title_regex, section)
-        title = ''
-        if m:
-            title = m.group(1)
-
-        values = [line.split() for line in section.split(self.line_delimiter)[1:] if line]
-        return {"title": title, "values": values}
 
 
 class TopFile(TopFileBase, AbstractParameterFile):
@@ -200,37 +230,31 @@ class TopFile(TopFileBase, AbstractParameterFile):
 
     @TopFileBase.atoms.setter
     def atoms(self, value):
-        #super(TopFile, self).__setattr__('atoms', value)  # This needs a parser first
         self._atoms = value
         self.atoms_section.values = value
 
     @TopFileBase.pairs.setter
     def pairs(self, value):
-        #super(TopFile, self).__setattr__('pairs', value)
         self._pairs = value
         self.pairs_section = PairsSection(value, self.potential)
 
     @TopFileBase.bonds.setter
     def bonds(self, value):
-        #super(TopFile, self).__setattr__('bonds', value)  # This needs a parser first
         self._bonds = value
         self.bonds_section.values = value
 
     @TopFileBase.exclusions.setter
     def exclusions(self, value):
-        #super(TopFile, self).__setattr__('exclusions', value)  # This needs a parser first
         self._exclusions = value
         self.exclusions_section.values = value
 
     @TopFileBase.angles.setter
     def angles(self, value):
-        #super(TopFile, self).__setattr__('angles', value)  # This needs a parser first
         self._angles = value
         self.angles_section.values = value
 
     @TopFileBase.dihedrals.setter
     def dihedrals(self, value):
-        #super(TopFile, self).__setattr__('dihedrals', value)  # This needs a parser first
         self._dihedrals = value
         self.dihedrals_section.values = value
 
@@ -258,7 +282,7 @@ class TopFile(TopFileBase, AbstractParameterFile):
         self.system_section.values = self.data['system'],
         self.molecules_section.values = self.data['molecules']
 
-        #for key in self.default_sections:
+        # for key in self.default_sections:
         #
         #    self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]
         #    #self.__getattribute__(key)[0].values = self.data[self.__getattribute__(key)[0].unformatted_title]
