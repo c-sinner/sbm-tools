@@ -13,6 +13,8 @@ class AbstractTopFileSection(AbstractParameterFileSection):
 
     def __init__(self, *args, **kwargs):
         super(AbstractTopFileSection, self).__init__(*args, **kwargs)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
 
     @property
     def contents(self):

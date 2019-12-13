@@ -1,3 +1,5 @@
+import functools
+
 from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomPair
 from sbmtools.atoms import AtomsList, Atom
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
@@ -5,7 +7,8 @@ from sbmtools.base import AbstractParameterFile
 import re
 
 from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSection, DihedralsSection, \
-    ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection
+    ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection, \
+    AbstractTopFileSection
 
 
 class TopFileBase(object):
@@ -77,31 +80,18 @@ class TopFileBase(object):
         self._dihedrals = value
 
 
-class TopFileSectionParser(object):
-    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
+class TopFileSectionContentParser(object):
+    content_class = AbstractTopFileSection
+    title = ''
     line_delimiter = '\n'
 
-    def __init__(self):
-        self.title = ''
+    def __init__(self, content=''):
+        self.content = content
         self.values = []
         self.objects = []
 
-    def export(self):
-        return {'title': self.title, 'values': self.values, 'objects': self.objects}
-
-    def parse(self, data):
-        self.title = self.find_title(data)
-        self.values = self.process_content(data)
-        self.objects = self.process_values()
-        return self.export()
-
-    def find_title(self, data):
-        m = re.match(self.title_regex, data)
-        if m:
-            return m.group(1)
-        return ''
-
-    def convert_numericals(self, items):
+    @staticmethod
+    def convert_numericals(items):
         result = []
         for item in items:
             try:
@@ -113,9 +103,53 @@ class TopFileSectionParser(object):
                     result.append(item)
         return result
 
+    def parse(self, data):
+        self.values = self.process_content(data)
+        self.objects = self.process_values()
+        return self.export()
+
     def process_content(self, data):
         return [self.convert_numericals(line.split()) for line in data.split(self.line_delimiter)[1:] if line]
 
+    def export(self):
+        return self.content_class(**{'title': self.title, 'values': self.values, 'objects': self.objects})
+
+
+class PairsContentParser(TopFileSectionContentParser):
+    def process_content(self, data):
+        return [self.convert_numericals(line.split()) for line in data.split(self.line_delimiter)[1:] if line]
+
+
+class TopFileSectionParser(object):
+    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
+    line_delimiter = '\n'
+
+    def __init__(self, data=''):
+        self.data = data
+        self.title = self.find_title(data)
+        self.content = self.split_content(data)
+
+        self.content_parser = TopFileSectionContentParser
+        self.section = AbstractTopFileSection()
+
+    def export(self):
+        return self.section
+
+    def find_title(self, data):
+        m = re.match(self.title_regex, data)
+        if m:
+            return m.group(1)
+        return ''
+
+    def split_content(self, data):
+        return data.split(self.line_delimiter)[1:]
+
+    def process_content(self):
+        if self.title == 'pairs':
+            self.content_parser = PairsContentParser
+        self.content = self.content_parser.parse(self.content)
+
+    '''
     def process_values(self):
         if self.title == 'pairs':
             return PairsList([AtomPair(value[0], value[1], 0.8) for value in self.values])
@@ -125,6 +159,7 @@ class TopFileSectionParser(object):
             return AtomsList([Atom(value[0]) for value in self.values])
         else:
             return []
+    '''
 
 
 class TopFileParser(TopFileBase, AbstractParameterFileParser):
@@ -142,14 +177,15 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
     def postprocess_result(self, sections_list):
         def flatten(list_of_lists):
             return [item for sublist in list_of_lists for item in sublist]
-        #TODO: FIX THIS WITH REDUCE
+
+        # TODO: FIX THIS WITH REDUCE
+
         unique_keys = []
         [unique_keys.append(x['title']) for x in sections_list if x['title'] not in unique_keys]
 
         processed = {}
         for unique_key in unique_keys:
-            processed[unique_key] = flatten(
-                    [section['values'] for section in sections_list if section['title'] == unique_key])
+            processed[unique_key] = functools.reduce(lambda a, b: a+b, [section for section in sections_list if section['title'] == unique_key])
 
         processed.update(self.export())
 
