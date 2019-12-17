@@ -6,6 +6,7 @@ class AbstractAtomPair(object):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
     @staticmethod
     def get_kwargs_formatted(kwargs):
         return ' '.join(['{0}: {1}'.format(*kwarg) for kwarg in kwargs.items()])
