@@ -25,9 +25,6 @@ class PDB:
     def __init__(self, path_to__pdb: str):
         self.path = path_to__pdb
 
-    class PDBValueError(ValueError):
-        def __init__(self, msg: str):
-            super().__init__(msg)
 
     def find_and_trim(self, target: str, start_idx: int, end_idx: int, return_type='str', offset=0):
         trimmed = target[start_idx - offset: end_idx - offset + 1].strip()
@@ -38,8 +35,8 @@ class PDB:
                 converted = int(trimmed)
                 return converted
             except ValueError:
-                raise self.PDBValueError(
-                    'PDBValueError : the section cannot be converted into int. Offending string : {0} '
+                raise ValueError(
+                    'ValueError : the section cannot be converted into int. Offending string : {0} '
                     'Offending indices : {1} and {2}'.format(
                         target, start_idx - offset, end_idx - offset))
         elif return_type == 'float':
@@ -47,8 +44,8 @@ class PDB:
                 converted = float(trimmed)
                 return converted
             except ValueError:
-                raise self.PDBValueError(
-                    'PDBValueError : the section cannot be converted into float. Offending string : {0} '
+                raise ValueError(
+                    'ValueError : the section cannot be converted into float. Offending string : {0} '
                     'Offending indices : {1} and {2}'.format(
                         target, start_idx - offset, end_idx - offset))
 
@@ -69,11 +66,11 @@ class PDB:
                                          self.find_and_trim(l, 22, 22, 'str', 1),
                                          self.find_and_trim(l, 23, 26, 'str', 1),
                                          self.find_and_trim(l, 27, 27, 'str', 1),
-                                         self.find_and_trim(l, 37, 42, 'float', 1),
-                                         self.find_and_trim(l, 44, 50, 'float', 1),
-                                         self.find_and_trim(l, 52, 58, 'float', 1),
-                                         self.find_and_trim(l, 60, 63, 'float', 1),
-                                         self.find_and_trim(l, 65, 69, 'float', 1),
+                                         self.find_and_trim(l, 31, 38, 'float', 1),
+                                         self.find_and_trim(l, 39, 46, 'float', 1),
+                                         self.find_and_trim(l, 47, 54, 'float', 1),
+                                         self.find_and_trim(l, 55, 60, 'float', 1),
+                                         self.find_and_trim(l, 61, 66, 'float', 1),
                                          self.find_and_trim(l, 73, 76, 'str', 1),
                                          self.find_and_trim(l, 77, 78, 'str', 1), )
                         list_of_atoms.append(atom)
