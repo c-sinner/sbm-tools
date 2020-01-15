@@ -25,7 +25,6 @@ class PDB:
     def __init__(self, path_to__pdb: str):
         self.path = path_to__pdb
 
-
     def find_and_trim(self, target: str, start_idx: int, end_idx: int, return_type='str', offset=0):
         trimmed = target[start_idx - offset: end_idx - offset + 1].strip()
         if return_type == 'str':
@@ -51,34 +50,27 @@ class PDB:
 
     # Open a pdb file in the path and get all the atoms in an array
     def PDB_to_Atoms(self):
-        success = 0
-        failure = 0
         list_of_atoms = []
         with open(self.path, 'r') as file:
             target = file.read().split('\n')
             for l in target:
-                try:
-                    if len(l) > 3 and l[0:4] == 'ATOM':
-                        atom = self.Atom(self.find_and_trim(l, 7, 11, 'int', 1),
-                                         self.find_and_trim(l, 13, 16, 'str', 1),
-                                         self.find_and_trim(l, 17, 17, 'str', 1),
-                                         self.find_and_trim(l, 18, 20, 'str', 1),
-                                         self.find_and_trim(l, 22, 22, 'str', 1),
-                                         self.find_and_trim(l, 23, 26, 'str', 1),
-                                         self.find_and_trim(l, 27, 27, 'str', 1),
-                                         self.find_and_trim(l, 31, 38, 'float', 1),
-                                         self.find_and_trim(l, 39, 46, 'float', 1),
-                                         self.find_and_trim(l, 47, 54, 'float', 1),
-                                         self.find_and_trim(l, 55, 60, 'float', 1),
-                                         self.find_and_trim(l, 61, 66, 'float', 1),
-                                         self.find_and_trim(l, 73, 76, 'str', 1),
-                                         self.find_and_trim(l, 77, 78, 'str', 1), )
-                        list_of_atoms.append(atom)
-                        success += 1
-                except Exception:
-                    failure += 1
-
-        return list_of_atoms, success, failure
+                if len(l) > 3 and l[0:4] == 'ATOM':
+                    atom = self.Atom(self.find_and_trim(l, 7, 11, 'int', 1),
+                                     self.find_and_trim(l, 13, 16, 'str', 1),
+                                     self.find_and_trim(l, 17, 17, 'str', 1),
+                                     self.find_and_trim(l, 18, 20, 'str', 1),
+                                     self.find_and_trim(l, 22, 22, 'str', 1),
+                                     self.find_and_trim(l, 23, 26, 'str', 1),
+                                     self.find_and_trim(l, 27, 27, 'str', 1),
+                                     self.find_and_trim(l, 31, 38, 'float', 1),
+                                     self.find_and_trim(l, 39, 46, 'float', 1),
+                                     self.find_and_trim(l, 47, 54, 'float', 1),
+                                     self.find_and_trim(l, 55, 60, 'float', 1),
+                                     self.find_and_trim(l, 61, 66, 'float', 1),
+                                     self.find_and_trim(l, 73, 76, 'str', 1),
+                                     self.find_and_trim(l, 77, 78, 'str', 1), )
+                    list_of_atoms.append(atom)
+        return list_of_atoms
 
 
 # Driver
