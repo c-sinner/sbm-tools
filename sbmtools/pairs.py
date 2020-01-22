@@ -1,9 +1,5 @@
 class AbstractAtomGroup(object):
     #AbstractAtomPair -> AbstractAtomGroup
-    #index = firstAtom, 
-    #partner = secondAtom
-    #thirdAtom
-    #fourthAtom
     def __init__(self, firstAtom=None, secondAtom=None, **kwargs):
         self.firstAtom = firstAtom
         self.secondAtom = secondAtom
@@ -29,16 +25,16 @@ class AbstractAtomGroup(object):
 
 
 class AtomPair(AbstractAtomGroup):
-    def __init__(self, firstAtom, secondAtom, distance):
-        super(AtomPair, self).__init__(firstAtom, secondAtom)
+    def __init__(self, firstAtom, secondAtom, distance, **kwargs):
+        super(AtomPair, self).__init__(firstAtom, secondAtom, **kwargs)
         self.distance = distance
 
     def __str__(self):
         return "{0} {1} - dist: {2}".format(self.firstAtom, self.secondAtom, self.distance)
 
 class Angle(AbstractAtomGroup):
-    def __init__(self, firstAtom, secondAtom, thirdAtom, phi):
-        super(Angle, self).__init__(firstAtom, secondAtom)
+    def __init__(self, firstAtom, secondAtom, thirdAtom, phi, **kwargs):
+        super(Angle, self).__init__(firstAtom, secondAtom, **kwargs)
         self.thirdAtom = thirdAtom
         self.phi = phi
 
@@ -49,8 +45,8 @@ class Angle(AbstractAtomGroup):
         return self.firstAtom == other.firstAtom and self.secondAtom == other.secondAtom and self.thirdAtom == other.thirdAtom
 
 class Dihedral(AbstractAtomGroup):
-    def __init__(self, firstAtom, secondAtom, thirdAtom, fourthAtom, phi, psi):
-        super(Dihedral, self).__init__(firstAtom, secondAtom)
+    def __init__(self, firstAtom, secondAtom, thirdAtom, fourthAtom, phi, psi, **kwargs):
+        super(Dihedral, self).__init__(firstAtom, secondAtom, **kwargs)
         self.thirdAtom = thirdAtom
         self.fourthAtom = fourthAtom
         self.phi = phi
@@ -176,3 +172,9 @@ class PairsList(list):
 
     def __rmul__(self, *args, **kwargs):
         raise AttributeError
+
+class AnglesList(PairsList):
+    object_class = Angle
+
+class DihedralsList(PairsList):
+    object_class = Dihedral
