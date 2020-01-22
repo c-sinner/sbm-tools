@@ -1,5 +1,5 @@
 import unittest
-from sbmtools import PairsList, AbstractAtomPair
+from sbmtools import PairsList, AbstractAtomGroup
 
 
 class TestPairs(unittest.TestCase):
@@ -8,19 +8,19 @@ class TestPairs(unittest.TestCase):
         # Initiate with a list of iterables.
         p1 = PairsList([[1, 2], [1, 3], [2, 3]])
 
-        # Initiate with a list of AbstractAtomPair objects.
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(1, 3)
-        ap3 = AbstractAtomPair(2, 3)
+        # Initiate with a list of AbstractAtomGroup objects.
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(1, 3)
+        ap3 = AbstractAtomGroup(2, 3)
 
         p1 = PairsList([ap1, ap2, ap3])
 
     def test_add(self):
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(2, 2)
-        ap3 = AbstractAtomPair(3, 2)
-        ap4 = AbstractAtomPair(4, 2)
-        ap5 = AbstractAtomPair(5, 2)
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(2, 2)
+        ap3 = AbstractAtomGroup(3, 2)
+        ap4 = AbstractAtomGroup(4, 2)
+        ap5 = AbstractAtomGroup(5, 2)
 
         p1 = PairsList([ap1, ap2, ap3, ap4])
         p2 = PairsList([ap1, ap2, ap5])
@@ -32,11 +32,11 @@ class TestPairs(unittest.TestCase):
         self.assertEqual(p3, PairsList([ap1, ap2, ap3, ap4, ap1, ap2, ap5]))
 
     def test_remove(self):
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(2, 2)
-        ap3 = AbstractAtomPair(3, 2)
-        ap4 = AbstractAtomPair(4, 2)
-        ap5 = AbstractAtomPair(5, 2)
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(2, 2)
+        ap3 = AbstractAtomGroup(3, 2)
+        ap4 = AbstractAtomGroup(4, 2)
+        ap5 = AbstractAtomGroup(5, 2)
 
         p1 = PairsList([ap1, ap2, ap3, ap4])
         p2 = PairsList([ap1, ap2, ap5])
@@ -48,11 +48,11 @@ class TestPairs(unittest.TestCase):
         self.assertEqual(p3, PairsList([ap3, ap4]))
 
     def test_union(self):
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(2, 2)
-        ap3 = AbstractAtomPair(3, 2)
-        ap4 = AbstractAtomPair(4, 2)
-        ap5 = AbstractAtomPair(5, 2)
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(2, 2)
+        ap3 = AbstractAtomGroup(3, 2)
+        ap4 = AbstractAtomGroup(4, 2)
+        ap5 = AbstractAtomGroup(5, 2)
 
         p1 = PairsList([ap1, ap2, ap3, ap4])
         p2 = PairsList([ap1, ap2, ap5])
@@ -61,11 +61,11 @@ class TestPairs(unittest.TestCase):
         self.assertEqual(p3, PairsList([ap1, ap2, ap3, ap4, ap5]))
 
     def test_intersection(self):
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(2, 2)
-        ap3 = AbstractAtomPair(3, 2)
-        ap4 = AbstractAtomPair(4, 2)
-        ap5 = AbstractAtomPair(5, 2)
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(2, 2)
+        ap3 = AbstractAtomGroup(3, 2)
+        ap4 = AbstractAtomGroup(4, 2)
+        ap5 = AbstractAtomGroup(5, 2)
 
         p1 = PairsList([ap1, ap2, ap3, ap4])
         p2 = PairsList([ap1, ap2, ap5])
@@ -74,11 +74,11 @@ class TestPairs(unittest.TestCase):
         self.assertEqual(p3, PairsList([ap1, ap2]))
 
     def test_symmetric_difference(self):
-        ap1 = AbstractAtomPair(1, 2)
-        ap2 = AbstractAtomPair(2, 2)
-        ap3 = AbstractAtomPair(3, 2)
-        ap4 = AbstractAtomPair(4, 2)
-        ap5 = AbstractAtomPair(5, 2)
+        ap1 = AbstractAtomGroup(1, 2)
+        ap2 = AbstractAtomGroup(2, 2)
+        ap3 = AbstractAtomGroup(3, 2)
+        ap4 = AbstractAtomGroup(4, 2)
+        ap5 = AbstractAtomGroup(5, 2)
 
         p1 = PairsList([ap1, ap2, ap3, ap4])
         p2 = PairsList([ap1, ap2, ap5])

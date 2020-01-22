@@ -1,6 +1,6 @@
 import functools
 
-from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomPair
+from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomGroup
 from sbmtools.atoms import AtomsList, Atom
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFile

@@ -1,7 +1,12 @@
-class AbstractAtomPair(object):
-    def __init__(self, index=None, partner=None, **kwargs):
-        self.index = index
-        self.partner = partner
+class AbstractAtomGroup(object):
+    #AbstractAtomPair -> AbstractAtomGroup
+    #index = firstAtom, 
+    #partner = secondAtom
+    #thirdAtom
+    #fourthAtom
+    def __init__(self, firstAtom=None, secondAtom=None, **kwargs):
+        self.firstAtom = firstAtom
+        self.secondAtom = secondAtom
         self.kwargs = kwargs
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -12,28 +17,55 @@ class AbstractAtomPair(object):
         return ' '.join(['{0}: {1}'.format(*kwarg) for kwarg in kwargs.items()])
 
     def __str__(self):
-        return "{0} {1} {2}".format(self.index, self.partner, self.get_kwargs_formatted(self.kwargs))
+        return "{0} {1} {2}".format(self.firstAtom, self.secondAtom, self.get_kwargs_formatted(self.kwargs))
 
     def __repr__(self):
-        return "<AbstractAtomPair {0}>".format(self.__str__())
+        return "<AbstractAtomGroup {0}>".format(self.__str__())
 
     def __eq__(self, other):
-        return self.index == other.index and self.partner == other.partner and all(
+        return self.firstAtom == other.firstAtom and self.secondAtom == other.secondAtom and all(
             [getattr(self, parameter) == getattr(other, parameter) for parameter in
              set(list(self.kwargs.keys()) + list(other.kwargs.keys()))])
 
 
-class AtomPair(AbstractAtomPair):
-    def __init__(self, index, partner, distance):
-        super(AtomPair, self).__init__(index, partner)
+class AtomPair(AbstractAtomGroup):
+    def __init__(self, firstAtom, secondAtom, distance):
+        super(AtomPair, self).__init__(firstAtom, secondAtom)
         self.distance = distance
 
     def __str__(self):
-        return "{0} {1} - dist: {2}".format(self.index, self.partner, self.distance)
+        return "{0} {1} - dist: {2}".format(self.firstAtom, self.secondAtom, self.distance)
+
+class Angle(AbstractAtomGroup):
+    def __init__(self, firstAtom, secondAtom, thirdAtom, phi):
+        super(Angle, self).__init__(firstAtom, secondAtom)
+        self.thirdAtom = thirdAtom
+        self.phi = phi
+
+    def __str__(self):
+        return "{0} {1} {2} - phi: {3}".format(self.firstAtom, self.secondAtom, self.thirdAtom, self.phi)
+
+    def __eq__(self, other):
+        return self.firstAtom == other.firstAtom and self.secondAtom == other.secondAtom and self.thirdAtom == other.thirdAtom
+
+class Dihedral(AbstractAtomGroup):
+    def __init__(self, firstAtom, secondAtom, thirdAtom, fourthAtom, phi, psi):
+        super(Dihedral, self).__init__(firstAtom, secondAtom)
+        self.thirdAtom = thirdAtom
+        self.fourthAtom = fourthAtom
+        self.phi = phi
+        self.psi = psi
+
+    def __str__(self):
+        return "{0} {1} {2} {3} - phi: {4} psi: {5}".format(
+            self.firstAtom, self.secondAtom, self.thirdAtom, self.fourthAtom, self.phi, self.psi)
+
+    def __eq__(self, other):
+        return self.firstAtom == other.firstAtom and self.secondAtom == other.secondAtom and self.thirdAtom == other.thirdAtom and self.fourthAtom == other.fourthAtom
 
 
 class PairsList(list):
-    object_class = AbstractAtomPair
+    object_class = AbstractAtomGroup
 
     @staticmethod
     def _check_object_type(object, target_type):
