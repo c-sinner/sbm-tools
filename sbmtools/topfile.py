@@ -1,6 +1,6 @@
 import functools
 
-from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomPair
+from sbmtools import AtomPair, PairsList, AbstractAtomPair, AbstractParameterFileParser
 from sbmtools.atoms import AtomsList, Atom
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
 from sbmtools.base import AbstractParameterFile
@@ -162,13 +162,13 @@ class TopFileSectionParser(object):
     '''
 
 
-class TopFileParser(TopFileBase, AbstractParameterFileParser):
+class TopFileParserOld(TopFileBase, AbstractParameterFileParser):
     sections_regex = r'\[[a-z\s]*\][a-zA-Z0-9\#\+\;\s\-\n\.\(\)]*\n'
     title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
     line_delimiter = '\n'
 
     def __init__(self, data):
-        super(TopFileParser, self).__init__(data)
+        super(TopFileParserOld, self).__init__(data)
 
     def parse(self):
         return self.postprocess_result(self.find_sections(self.preprocess_data(self.data)))
@@ -206,7 +206,7 @@ class TopFileParser(TopFileBase, AbstractParameterFileParser):
 
 class TopFile(TopFileBase, AbstractParameterFile):
     potential = LennardJonesPotential
-    parser = TopFileParser
+    parser = TopFileParserOld
 
     defaults_section = DefaultsSection()
     atom_types_section = AtomTypesSection()

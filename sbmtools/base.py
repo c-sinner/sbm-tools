@@ -1,12 +1,104 @@
+import re
 import uuid
 from datetime import date
+from contextlib import ContextDecorator
 
-class AbstractParameterFileParser(object):
-    def __init__(self, data=None):
-        self.data = data
+from sbmtools.potentials import LennardJonesPotential
 
-    def parse(self):
-        raise NotImplementedError
+
+class AbstractParameterFileParser(ContextDecorator):
+    def __init__(self, path=None, start=0):
+        self.num = start
+        self.attribute_name = "_data"
+        self.path = path
+
+    def __enter__(self):
+        self.file_stream = open(self.path, 'r')
+        return self
+
+    def __exit__(self, *exc):
+        self.file_stream.close()
+        return False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.num += 1
+        return self._readline()
+
+    def _readline(self):
+        value = self.file_stream.readline()
+        if value:
+            return self.attribute_name, value
+        else:
+            raise StopIteration
+
+
+class TopFileParser(AbstractParameterFileParser):
+    title_regex = r'^\s*\[\s*([a-zA-Z0-9]*)\s*\]\s*$'
+
+    def _readline(self):
+        attribute_name, line = super()._readline()
+        if self.contains_section_header(line):
+            section_header = self.get_section_header(line)
+            self.attribute_name = section_header
+            return self.__next__()
+
+        line = self.preprocess_line(line)
+        if not line:
+            return self.__next__()
+
+        return self.attribute_name, self.process_entry(self.attribute_name, line)
+
+    def get_section_header(self, line):
+        m = re.match(self.title_regex, line)
+        if m:
+            return m.group(1)
+        return None
+
+    def contains_section_header(self, line):
+        m = re.match(self.title_regex, line)
+        if m:
+            return True
+        return False
+
+    @staticmethod
+    def preprocess_line(line):
+        line = line.strip('\n')
+        line = re.sub(r';.*$', '', line)
+        return line.strip(" ")
+
+    @staticmethod
+    def convert_numericals(items):
+        result = []
+        for item in items:
+            try:
+                result.append(int(item))
+            except:
+                try:
+                    result.append(float(item))
+                except:
+                    result.append(item)
+        return result
+
+    def process_entry(self, section_name, line):
+        line = self.convert_numericals(line.split())
+
+        if section_name == "pairs":
+            return self.process_pairs_entry(line)
+
+        return line
+
+    @staticmethod
+    def process_pairs_entry(entry):
+        if entry[2] == 5:
+            return [entry[0], entry[1], entry[4]**(1/12.0), LennardJonesPotential]
+        if entry[2] == 6:
+            return [entry[0], entry[1], entry[4] ** (1 / 12.0), LennardJonesPotential]
+        return entry
+
+class ParameterFileEntry:
 
 
 class AbstractParameterFile(object):
@@ -16,7 +108,6 @@ class AbstractParameterFile(object):
         super(AbstractParameterFile, self).__init__(*args, **kwargs)
         self.args = args
         self.kwargs = kwargs
-        self.data = ''
 
     def __str__(self):
         super(AbstractParameterFile, self).__str__()
@@ -29,17 +120,21 @@ class AbstractParameterFile(object):
     def built(self):
         raise NotImplementedError
 
-
     def save(self, path):
         output = self.built()
-        output_stream = open(path, 'w')
-        output_stream.write(output)
-        output_stream.close()
+        with open(path, 'w') as output_stream:
+            output_stream.write(output)
 
     def load(self, path):
-        with open(path, 'r') as input_stream:
-            data = input_stream.read()
-        self.data = self.parser(data).parse()
+        with self.parser(path) as input_stream:
+            for line in input_stream:
+                self.process_line(*line)
+
+    def process_line(self, attr, line):
+        try:
+            getattr(self, attr).append(line)
+        except AttributeError:
+            setattr(self, attr, line)
 
 
 class AbstractParameterFileSection(object):
