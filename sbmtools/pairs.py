@@ -1,6 +1,3 @@
-from sbmtools.potentials import GaussianPotential
-
-
 class AbstractAtomGroup(object):
     def __init__(self, first_atom=None, second_atom=None, **kwargs):
         self.first_atom = first_atom
@@ -26,10 +23,10 @@ class AbstractAtomGroup(object):
 
 
 class AtomPair(AbstractAtomGroup):
-    def __init__(self, first_atom, second_atom, distance, potential, **kwargs):
+    def __init__(self, first_atom, second_atom, distance, potential=None, **kwargs):
         super(AtomPair, self).__init__(first_atom, second_atom, **kwargs)
         self.distance = distance
-        self.potential = GaussianPotential
+        self.potential = potential
 
     def __str__(self):
         return "{0} {1} - dist: {2} - potential: {3}".format(self.first_atom, self.second_atom, self.distance,
@@ -177,6 +174,10 @@ class AbstractPairsList(list):
 
     def __rmul__(self, *args, **kwargs):
         raise AttributeError
+
+    @property
+    def length(self):
+        return len(self._data)
 
 
 class PairsList(AbstractPairsList):

@@ -284,7 +284,7 @@ class TopFile(TopFileBase, AbstractParameterFile):
         "molecules_section",
     ]
 
-    def __init__(self, pairs=None, potential=LennardJonesPotential, *args, **kwargs):
+    def __init__(self, path=None, pairs=None, potential=LennardJonesPotential, *args, **kwargs):
         super().__init__()
 
         if isinstance(pairs, PairsList):
@@ -308,6 +308,9 @@ class TopFile(TopFileBase, AbstractParameterFile):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+        if path:
+            self.load(path)
 
     def __setattr__(self, key, value):
         if key == 'potential':
