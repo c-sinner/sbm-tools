@@ -3,10 +3,37 @@ import uuid
 from datetime import date
 from contextlib import ContextDecorator
 
-from sbmtools.potentials import LennardJonesPotential
+from sbmtools.pairs import AtomPair
+from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
+
+
+class ParameterFileEntry:
+    def __init__(self, *args):
+        super().__init__()
+        self._data = [self.convert_numericals(arg) for arg in args]
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    @staticmethod
+    def convert_numericals(item):
+        try:
+            return int(item)
+        except ValueError:
+            try:
+                return float(item)
+            except ValueError:
+                return item
+
+    def __repr__(self):
+        return "<ParameterFileEntry {0}>".format("  ".join([str(item) for item in self._data]))
 
 
 class AbstractParameterFileParser(ContextDecorator):
+    """
+    Context manager and Iterator for opening a file and looping through the lines. The readline method can be overloaded
+    to create more specific parsers.
+    """
     def __init__(self, path=None, start=0):
         self.num = start
         self.attribute_name = "_data"
@@ -25,80 +52,14 @@ class AbstractParameterFileParser(ContextDecorator):
 
     def __next__(self):
         self.num += 1
-        return self._readline()
+        return self.readline()
 
-    def _readline(self):
+    def readline(self):
         value = self.file_stream.readline()
         if value:
             return self.attribute_name, value
         else:
             raise StopIteration
-
-
-class TopFileParser(AbstractParameterFileParser):
-    title_regex = r'^\s*\[\s*([a-zA-Z0-9]*)\s*\]\s*$'
-
-    def _readline(self):
-        attribute_name, line = super()._readline()
-        if self.contains_section_header(line):
-            section_header = self.get_section_header(line)
-            self.attribute_name = section_header
-            return self.__next__()
-
-        line = self.preprocess_line(line)
-        if not line:
-            return self.__next__()
-
-        return self.attribute_name, self.process_entry(self.attribute_name, line)
-
-    def get_section_header(self, line):
-        m = re.match(self.title_regex, line)
-        if m:
-            return m.group(1)
-        return None
-
-    def contains_section_header(self, line):
-        m = re.match(self.title_regex, line)
-        if m:
-            return True
-        return False
-
-    @staticmethod
-    def preprocess_line(line):
-        line = line.strip('\n')
-        line = re.sub(r';.*$', '', line)
-        return line.strip(" ")
-
-    @staticmethod
-    def convert_numericals(items):
-        result = []
-        for item in items:
-            try:
-                result.append(int(item))
-            except:
-                try:
-                    result.append(float(item))
-                except:
-                    result.append(item)
-        return result
-
-    def process_entry(self, section_name, line):
-        line = self.convert_numericals(line.split())
-
-        if section_name == "pairs":
-            return self.process_pairs_entry(line)
-
-        return line
-
-    @staticmethod
-    def process_pairs_entry(entry):
-        if entry[2] == 5:
-            return [entry[0], entry[1], entry[4]**(1/12.0), LennardJonesPotential]
-        if entry[2] == 6:
-            return [entry[0], entry[1], entry[4] ** (1 / 12.0), LennardJonesPotential]
-        return entry
-
-class ParameterFileEntry:
 
 
 class AbstractParameterFile(object):

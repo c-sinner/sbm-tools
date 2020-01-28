@@ -1,25 +1,27 @@
 import functools
 
-from sbmtools import AtomPair, PairsList, AbstractAtomPair, AbstractParameterFileParser
 from sbmtools.atoms import AtomsList, Atom
 from sbmtools.potentials import LennardJonesPotential, AbstractPotential
-from sbmtools.base import AbstractParameterFile
+from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 import re
 
 from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSection, DihedralsSection, \
     ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection, \
     AbstractTopFileSection
 
+from sbmtools.pairs import AtomPair, PairsList
+from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
+
 
 class TopFileBase(object):
     def __init__(self, *args, **kwargs):
         super(TopFileBase, self).__init__(*args, **kwargs)
-        self._atoms = AtomsList()
+        self._atoms = []
         self._pairs = PairsList()
-        self._bonds = PairsList()
-        self._exclusions = PairsList()
-        self._angles = PairsList()
-        self._dihedrals = PairsList()
+        self._bonds = []
+        self._exclusions = []
+        self._angles = []
+        self._dihedrals = []
 
     def export(self):
         return {
@@ -80,6 +82,7 @@ class TopFileBase(object):
         self._dihedrals = value
 
 
+"""
 class TopFileSectionContentParser(object):
     content_class = AbstractTopFileSection
     title = ''
@@ -202,11 +205,64 @@ class TopFileParserOld(TopFileBase, AbstractParameterFileParser):
 
     def find_sections(self, data):
         return list(map(self.parse_section, re.findall(self.sections_regex, data, re.MULTILINE)))
+"""
+
+
+class TopFileParser(AbstractParameterFileParser):
+    title_regex = r'^\s*\[\s*([a-zA-Z0-9]*)\s*\]\s*$'
+
+    def readline(self):
+        attribute_name, line = super().readline()
+        if self.contains_section_header(line):
+            section_header = self.get_section_header(line)
+            self.attribute_name = section_header
+            return self.__next__()
+
+        line = self.preprocess_line(line)
+        if not line:
+            return self.__next__()
+
+        return self.attribute_name, self.process_entry(self.attribute_name, line)
+
+    def get_section_header(self, line):
+        m = re.match(self.title_regex, line)
+        if m:
+            return m.group(1)
+        return None
+
+    def contains_section_header(self, line):
+        m = re.match(self.title_regex, line)
+        if m:
+            return True
+        return False
+
+    @staticmethod
+    def preprocess_line(line):
+        line = line.strip('\n')
+        line = re.sub(r';.*$', '', line)
+        return line.strip(" ")
+
+    def process_entry(self, section_name, line):
+        line = line.split()
+
+        if section_name == "pairs":
+            return self.process_pairs_entry(line)
+
+        return line
+
+    @staticmethod
+    def process_pairs_entry(entry):
+        entry = ParameterFileEntry(*entry)
+        if entry[2] == 5:
+            return AtomPair(entry[0], entry[1], distance=entry[4], potential=GaussianPotential)
+        if entry[2] == 6:
+            return AtomPair(entry[0], entry[1], distance=entry[4], potential=CombinedGaussianPotential)
+        return entry
 
 
 class TopFile(TopFileBase, AbstractParameterFile):
     potential = LennardJonesPotential
-    parser = TopFileParserOld
+    parser = TopFileParser
 
     defaults_section = DefaultsSection()
     atom_types_section = AtomTypesSection()
@@ -303,6 +359,7 @@ class TopFile(TopFileBase, AbstractParameterFile):
         for line in output.split('\n'):
             print(line)
 
+    """
     def load(self, path):
         super(TopFile, self).load(path)
         self.atoms = self.data['atoms']
@@ -321,4 +378,5 @@ class TopFile(TopFileBase, AbstractParameterFile):
         # for key in self.default_sections:
         #
         #    self.__getattribute__(key).values = self.data[self.__getattribute__(key).unformatted_title]
-        #    #self.__getattribute__(key)[0].values = self.data[self.__getattribute__(key)[0].unformatted_title]
+        #    #self.__getattribute__(key)[0].values = self.data[self.__getattribute__(key)[0].unformatted_title] 
+    """

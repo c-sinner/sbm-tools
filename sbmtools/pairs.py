@@ -1,3 +1,6 @@
+from sbmtools.potentials import GaussianPotential
+
+
 class AbstractAtomPair(object):
     def __init__(self, index=None, partner=None, **kwargs):
         self.index = index
@@ -24,12 +27,13 @@ class AbstractAtomPair(object):
 
 
 class AtomPair(AbstractAtomPair):
-    def __init__(self, index, partner, distance):
+    def __init__(self, index, partner, distance, potential):
         super(AtomPair, self).__init__(index, partner)
         self.distance = distance
+        self.potential = GaussianPotential
 
     def __str__(self):
-        return "{0} {1} - dist: {2}".format(self.index, self.partner, self.distance)
+        return "{0} {1} - dist: {2} - potential: {3}".format(self.index, self.partner, self.distance, self.potential)
 
 
 class PairsList(list):
