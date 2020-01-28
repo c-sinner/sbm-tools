@@ -1,10 +1,6 @@
-import re
 import uuid
 from datetime import date
 from contextlib import ContextDecorator
-
-from sbmtools.pairs import AtomPair
-from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
 
 
 class ParameterFileEntry:
