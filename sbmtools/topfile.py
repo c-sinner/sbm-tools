@@ -1,17 +1,11 @@
-import functools
-
-from sbmtools import AtomPair, PairsList, AbstractParameterFileParser, AbstractAtomGroup
-from sbmtools.atoms import AtomsList, Atom
-from sbmtools.potentials import LennardJonesPotential, AbstractPotential
-from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 import re
 
-from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSection, DihedralsSection, \
-    ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection, \
-    AbstractTopFileSection
-
+from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 from sbmtools.pairs import AtomPair, PairsList
+from sbmtools.potentials import AbstractPotential
 from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
+from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSection, DihedralsSection, \
+    ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection
 
 
 class TopFileBase(object):
