@@ -1,12 +1,65 @@
+import re
 import uuid
 from datetime import date
+from contextlib import ContextDecorator
 
-class AbstractParameterFileParser(object):
-    def __init__(self, data=None):
-        self.data = data
+from sbmtools.pairs import AtomPair
+from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
 
-    def parse(self):
-        raise NotImplementedError
+
+class ParameterFileEntry:
+    def __init__(self, *args):
+        super().__init__()
+        self._data = [self.convert_numericals(arg) for arg in args]
+
+    def __getitem__(self, item):
+        return self._data[item]
+
+    @staticmethod
+    def convert_numericals(item):
+        try:
+            return int(item)
+        except ValueError:
+            try:
+                return float(item)
+            except ValueError:
+                return item
+
+    def __repr__(self):
+        return "<ParameterFileEntry {0}>".format("  ".join([str(item) for item in self._data]))
+
+
+class AbstractParameterFileParser(ContextDecorator):
+    """
+    Context manager and Iterator for opening a file and looping through the lines. The readline method can be overloaded
+    to create more specific parsers.
+    """
+    def __init__(self, path=None, start=0):
+        self.num = start
+        self.attribute_name = "_data"
+        self.path = path
+
+    def __enter__(self):
+        self.file_stream = open(self.path, 'r')
+        return self
+
+    def __exit__(self, *exc):
+        self.file_stream.close()
+        return False
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        self.num += 1
+        return self.readline()
+
+    def readline(self):
+        value = self.file_stream.readline()
+        if value:
+            return self.attribute_name, value
+        else:
+            raise StopIteration
 
 
 class AbstractParameterFile(object):
@@ -16,7 +69,6 @@ class AbstractParameterFile(object):
         super(AbstractParameterFile, self).__init__(*args, **kwargs)
         self.args = args
         self.kwargs = kwargs
-        self.data = ''
 
     def __str__(self):
         super(AbstractParameterFile, self).__str__()
@@ -29,17 +81,21 @@ class AbstractParameterFile(object):
     def built(self):
         raise NotImplementedError
 
-
     def save(self, path):
         output = self.built()
-        output_stream = open(path, 'w')
-        output_stream.write(output)
-        output_stream.close()
+        with open(path, 'w') as output_stream:
+            output_stream.write(output)
 
     def load(self, path):
-        with open(path, 'r') as input_stream:
-            data = input_stream.read()
-        self.data = self.parser(data).parse()
+        with self.parser(path) as input_stream:
+            for line in input_stream:
+                self.process_line(*line)
+
+    def process_line(self, attr, line):
+        try:
+            getattr(self, attr).append(line)
+        except AttributeError:
+            setattr(self, attr, line)
 
 
 class AbstractParameterFileSection(object):

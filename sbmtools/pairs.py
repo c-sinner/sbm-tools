@@ -1,3 +1,6 @@
+from sbmtools.potentials import GaussianPotential
+
+
 class AbstractAtomGroup(object):
     #AbstractAtomPair -> AbstractAtomGroup
     def __init__(self, firstAtom=None, secondAtom=None, **kwargs):
@@ -25,12 +28,14 @@ class AbstractAtomGroup(object):
 
 
 class AtomPair(AbstractAtomGroup):
-    def __init__(self, firstAtom, secondAtom, distance, **kwargs):
+    def __init__(self, firstAtom, secondAtom, distance, potential, **kwargs):
         super(AtomPair, self).__init__(firstAtom, secondAtom, **kwargs)
         self.distance = distance
+        self.potential = GaussianPotential
 
     def __str__(self):
-        return "{0} {1} - dist: {2}".format(self.firstAtom, self.secondAtom, self.distance)
+        return "{0} {1} - dist: {2} - potential: {3}".format(self.firstAtom, self.secondAtom, self.distance, self.potential)
+
 
 class Angle(AbstractAtomGroup):
     def __init__(self, firstAtom, secondAtom, thirdAtom, phi, **kwargs):
