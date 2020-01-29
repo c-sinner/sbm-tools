@@ -1,8 +1,10 @@
 import re
 
 from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
-from sbmtools.pairs import AtomPair, PairsList
-from sbmtools.potentials import AbstractPotential
+from sbmtools.pairs import AtomPair, PairsList, AnglesList, DihedralsList, Angle, ExclusionsList, AbstractAtomGroup, \
+    Dihedral, BondsList
+from sbmtools.potentials import AbstractPotential, AnglesPotential, BondPotential, ImproperDihedralPotential, \
+    DihedralPotential
 from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
 from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSection, DihedralsSection, \
     ExclusionsSection, BondsSection, AtomsSection, MoleculeTypeSection, AtomTypesSection, DefaultsSection, PairsSection
@@ -13,10 +15,10 @@ class TopFileBase(object):
         super(TopFileBase, self).__init__(*args, **kwargs)
         self._atoms = []
         self._pairs = PairsList()
-        self._bonds = []
-        self._exclusions = []
-        self._angles = []
-        self._dihedrals = []
+        self._bonds = BondsList()
+        self._exclusions = ExclusionsList()
+        self._angles = AnglesList()
+        self._dihedrals = DihedralsList()
 
     def export(self):
         return {
@@ -243,7 +245,20 @@ class TopFileParser(AbstractParameterFileParser):
         if section_name == "pairs":
             return self.process_pairs_entry(line)
 
-        return line
+        if section_name == "bonds":
+            return self.process_bonds_entry(line)
+
+        elif section_name == "exclusions":
+            return self.process_exclusions_entry(line)
+
+        elif section_name == "angles":
+            return self.process_angles_entry(line)
+
+        elif section_name == "dihedrals":
+            return self.process_dihedrals_entry(line)
+
+        else:
+            return line
 
     @staticmethod
     def process_pairs_entry(entry):
@@ -252,6 +267,36 @@ class TopFileParser(AbstractParameterFileParser):
             return AtomPair(entry[0], entry[1], distance=entry[4], potential=GaussianPotential)
         if entry[2] == 6:
             return AtomPair(entry[0], entry[1], distance=entry[4], potential=CombinedGaussianPotential)
+        return entry
+
+    @staticmethod
+    def process_bonds_entry(entry):
+        entry = ParameterFileEntry(*entry)
+        if entry[2] == 1:
+            return AtomPair(entry[0], entry[1], distance=entry[3], potential=BondPotential)
+        return entry
+
+    @staticmethod
+    def process_exclusions_entry(entry):
+        return AbstractAtomGroup(*entry)
+
+    @staticmethod
+    def process_angles_entry(entry):
+        entry = ParameterFileEntry(*entry)
+        if entry[3] == 1:
+            return Angle(entry[0], entry[1], entry[2], angle=entry[4], potential=AnglesPotential)
+        return entry
+
+    @staticmethod
+    def process_dihedrals_entry(entry):
+        entry = ParameterFileEntry(*entry)
+        if entry[4] == 1:
+            if entry[7] == 1:
+                return Dihedral(entry[0], entry[1], entry[2], entry[3], angle=entry[5],
+                                potential=ImproperDihedralPotential)
+            if entry[7] == 3:
+                return Dihedral(entry[0], entry[1], entry[2], entry[3], angle=entry[5],
+                                potential=DihedralPotential)
         return entry
 
 
