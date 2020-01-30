@@ -1,9 +1,9 @@
-class AbstractAtomGroup(object):
-    def __init__(self, first_atom=None, second_atom=None, potential=None, **kwargs):
+class AbstractAtom(object):
+    def __init__(self, first_atom=None, *args, **kwargs):
         self.first_atom = first_atom
-        self.second_atom = second_atom
-        self.potential = potential
         self.kwargs = kwargs
+        self.args = args
+
         for key, value in kwargs.items():
             setattr(self, key, value)
 
@@ -12,15 +12,36 @@ class AbstractAtomGroup(object):
         return ' '.join(['{0}: {1}'.format(*kwarg) for kwarg in kwargs.items()])
 
     def __str__(self):
+        return "{0} {1}".format(self.first_atom, self.get_kwargs_formatted(self.kwargs))
+
+    def __repr__(self):
+        return "<AbstractAtom {0}>".format(self.__str__())
+
+    def __eq__(self, other):
+        return self.first_atom == other.index and all(
+            [getattr(self, parameter) == getattr(other, parameter) for parameter in
+             set(list(self.kwargs.keys()) + list(other.kwargs.keys()))])
+
+
+class Atom(AbstractAtom):
+    def __repr__(self):
+        return "<Atom {0}>".format(self.__str__())
+
+
+class AbstractAtomGroup(AbstractAtom):
+    def __init__(self, first_atom=None, second_atom=None, potential=None, *args, **kwargs):
+        super(AbstractAtomGroup, self).__init__(first_atom, *args, **kwargs)
+        self.second_atom = second_atom
+        self.potential = potential
+
+    def __str__(self):
         return "{0} {1} {2}".format(self.first_atom, self.second_atom, self.get_kwargs_formatted(self.kwargs))
 
     def __repr__(self):
         return "<AbstractAtomGroup {0}>".format(self.__str__())
 
     def __eq__(self, other):
-        return self.first_atom == other.first_atom and self.second_atom == other.second_atom and all(
-            [getattr(self, parameter) == getattr(other, parameter) for parameter in
-             set(list(self.kwargs.keys()) + list(other.kwargs.keys()))])
+        return super(AbstractAtomGroup, self).__eq__(other) and self.second_atom == other.second_atom
 
 
 class AtomPair(AbstractAtomGroup):
@@ -186,6 +207,14 @@ class AbstractPairsList(list):
     @property
     def length(self):
         return len(self._data)
+
+
+class AbstractAtomList(AbstractPairsList):
+    object_class = AbstractAtom
+
+
+class AtomList(AbstractAtomList):
+    object_class = Atom
 
 
 class PairsList(AbstractPairsList):

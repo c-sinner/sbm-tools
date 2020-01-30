@@ -2,7 +2,7 @@ import re
 
 from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 from sbmtools.pairs import AtomPair, PairsList, AnglesList, DihedralsList, Angle, ExclusionsList, AbstractAtomGroup, \
-    Dihedral, BondsList
+    Dihedral, BondsList, AtomList, Atom
 from sbmtools.potentials import AbstractPotential, AnglesPotential, BondPotential, ImproperDihedralPotential, \
     DihedralPotential
 from sbmtools.potentials import LennardJonesPotential, GaussianPotential, CombinedGaussianPotential
@@ -13,7 +13,7 @@ from sbmtools.topfile_sections import MoleculesSection, SystemSection, AnglesSec
 class TopFileBase(object):
     def __init__(self, *args, **kwargs):
         super(TopFileBase, self).__init__(*args, **kwargs)
-        self._atoms = []
+        self._atoms = AtomList()
         self._pairs = PairsList()
         self._bonds = BondsList()
         self._exclusions = ExclusionsList()
@@ -242,6 +242,9 @@ class TopFileParser(AbstractParameterFileParser):
     def process_entry(self, section_name, line):
         line = line.split()
 
+        if section_name == "atoms":
+            return self.process_atoms_entry(line)
+
         if section_name == "pairs":
             return self.process_pairs_entry(line)
 
@@ -259,6 +262,10 @@ class TopFileParser(AbstractParameterFileParser):
 
         else:
             return line
+
+    @staticmethod
+    def process_atoms_entry(entry):
+        return Atom(entry[0], type=entry[1], resnr=entry[2], residue=entry[3], atom=entry[4], cgnr=entry[5], charge=entry[6], mass=entry[7])
 
     @staticmethod
     def process_pairs_entry(entry):
