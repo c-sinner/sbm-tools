@@ -1,8 +1,12 @@
-class AbstractAtom(object):
+from sbmtools.potentials import AbstractPotential
+
+from sbmtools import WriteMixin
+
+
+class AbstractAtom(WriteMixin, object):
     def __init__(self, first_atom=None, *args, **kwargs):
+        super(AbstractAtom, self).__init__(*args, **kwargs)
         self.first_atom = first_atom
-        self.kwargs = kwargs
-        self.args = args
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -11,16 +15,18 @@ class AbstractAtom(object):
     def get_kwargs_formatted(kwargs):
         return ' '.join(['{0}: {1}'.format(*kwarg) for kwarg in kwargs.items()])
 
-    def __str__(self):
-        return "{0} {1}".format(self.first_atom, self.get_kwargs_formatted(self.kwargs))
-
     def __repr__(self):
-        return "<AbstractAtom {0}>".format(self.__str__())
+        return "<AbstractAtom {0} {1}>".format(self.first_atom, self.get_kwargs_formatted(self.kwargs))
 
     def __eq__(self, other):
-        return self.first_atom == other.index and all(
+        return self.first_atom == other.first_atom and all(
             [getattr(self, parameter) == getattr(other, parameter) for parameter in
              set(list(self.kwargs.keys()) + list(other.kwargs.keys()))])
+
+    def write(self):
+        return "{0} {1} {2}".format(self.first_atom,
+                                    " ".join([str(arg) for arg in self.args]),
+                                    " ".join([str(value) for value in self.kwargs.values()]))
 
 
 class Atom(AbstractAtom):
@@ -32,16 +38,27 @@ class AbstractAtomGroup(AbstractAtom):
     def __init__(self, first_atom=None, second_atom=None, potential=None, *args, **kwargs):
         super(AbstractAtomGroup, self).__init__(first_atom, *args, **kwargs)
         self.second_atom = second_atom
-        self.potential = potential
+        self.potential = potential  # TODO: This is not an instance, check this
 
-    def __str__(self):
-        return "{0} {1} {2}".format(self.first_atom, self.second_atom, self.get_kwargs_formatted(self.kwargs))
+    @property
+    def is_bound(self):
+        try:
+            return isinstance(self.potential(), AbstractPotential)
+        except TypeError:
+            return False
 
     def __repr__(self):
-        return "<AbstractAtomGroup {0}>".format(self.__str__())
+        return "<AbstractAtomGroup is_bound={0} {1} {2} {3}>".format(self.is_bound, self.first_atom, self.second_atom,
+                                                                     self.get_kwargs_formatted(self.kwargs))
 
     def __eq__(self, other):
         return super(AbstractAtomGroup, self).__eq__(other) and self.second_atom == other.second_atom
+
+    def write(self):
+        if self.is_bound:
+            return self.potential.format.format(**self.potential(self).apply())
+        else:
+            return ''
 
 
 class AtomPair(AbstractAtomGroup):
@@ -88,7 +105,8 @@ class Dihedral(AbstractAtomGroup):
         return "<Dihedral {0}>".format(self.__str__())
 
     def __eq__(self, other):
-        return super(Dihedral, self).__eq__(other) and self.third_atom == other.third_atom and self.fourth_atom == other.fourth_atom and self.angle == other.angle
+        return super(Dihedral, self).__eq__(other) and self.third_atom == other.third_atom and \
+               self.fourth_atom == other.fourth_atom and self.angle == other.angle
 
 
 class AbstractPairsList(list):
@@ -109,7 +127,7 @@ class AbstractPairsList(list):
         try:
             return self.object_class(*object)
         except TypeError:
-            print("Could not initialize instance of {0} with {1}. Expected a list or tuple of values.".format(
+            raise TypeError("Could not initialize instance of {0} with {1}. Expected a list or tuple of values.".format(
                 self.object_class, object))
 
     def __init__(self, data=None, **kwargs):

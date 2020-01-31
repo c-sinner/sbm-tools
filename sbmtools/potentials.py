@@ -54,9 +54,19 @@ class AnglesPotential(AbstractPotential):
 
 class DihedralPotential(AbstractPotential):
     header = ';ai     aj      ak      al     ftype     phi0(deg)    Kd    mult'
-    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d}  {kd:.8E} {multiplicity:d}'
+    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:.8E} {kd:.8E} {multiplicity:d}'
     strength = 0.500000000E+00
     multiplicity = 3
+    fields = [
+        "first_atom",
+        "second_atom",
+        "third_atom",
+        "fourth_atom",
+        "ftype",
+        "angle",
+        "kd",
+        "multiplicity",
+    ]
     function_type = 1
 
     def __init__(self, pair=None):
@@ -83,9 +93,19 @@ class DihedralPotential(AbstractPotential):
 
 class ImproperDihedralPotential(AbstractPotential):
     header = ';ai     aj      ak      al     ftype     phi0(deg)    Kd    mult'
-    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d}  {kd:.8E} {multiplicity:d}'
+    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:.8E} {kd:.8E} {multiplicity:d}'
     strength = 0.100000000E+01
     multiplicity = 1
+    fields = [
+        "first_atom",
+        "second_atom",
+        "third_atom",
+        "fourth_atom",
+        "ftype",
+        "angle",
+        "kd",
+        "multiplicity",
+    ]
     function_type = 1
 
     def __init__(self, pair=None):
@@ -112,10 +132,10 @@ class ImproperDihedralPotential(AbstractPotential):
 
 class LennardJonesPotential(AbstractPotential):
     header = ';   ai     aj ftype             c6                c12'
-    format = '{ai:6d} {ai:6d} {ftype:d} {c6:18.9E} {c12:18.9E}'
+    format = '{first_atom:6d} {second_atom:6d} {ftype:d} {c6:18.9E} {c12:18.9E}'
     fields = [
-        "ai",
-        "aj",
+        "first_atom",
+        "second_atom",
         "ftype",
         "c6",
         "c12",
@@ -156,10 +176,10 @@ class C10Potential(AbstractPotential):
 
 class GaussianPotential(AbstractPotential):
     header = ';   ai     aj ftype             Amplitude     mu    sigma'
-    format = '{ai:6d} {ai:6d} {ftype:d} {amplitude:18.9E} {mu:18.9E} {sigma:18.9E}'
+    format = '{first_atom:6d} {second_atom:6d} {ftype:d} {amplitude:18.9E} {mu:18.9E} {sigma:18.9E}'
     fields = [
-        "ai",
-        "aj",
+        "first_atom",
+        "second_atom",
         "ftype",
         "amplitude",
         "mu",
@@ -190,10 +210,10 @@ class GaussianPotential(AbstractPotential):
 
 class CombinedGaussianPotential(AbstractPotential):
     header = ';   ai     aj ftype             Amplitude     mu    sigma    a'
-    format = '{ai:6d} {ai:6d} {ftype:d} {amplitude:18.9E} {mu:18.9E} {sigma:18.9E} {a:18.9E}'
+    format = '{first_atom:6d} {second_atom:6d} {ftype:d} {amplitude:18.9E} {mu:18.9E} {sigma:18.9E} {a:18.9E}'
     fields = [
-        "ai",
-        "aj",
+        "first_atom",
+        "second_atom",
         "ftype",
         "amplitude",
         "mu",

@@ -1,5 +1,5 @@
 import unittest
-from sbmtools import PairsList, AbstractAtomGroup
+from sbmtools import PairsList, AbstractAtomGroup, Dihedral
 
 
 class TestPairs(unittest.TestCase):
@@ -85,6 +85,17 @@ class TestPairs(unittest.TestCase):
 
         p3 = p1.symmetric_difference(p2)
         self.assertEqual(p3, PairsList([ap3, ap4, ap5]))
+
+    def test_dihedrals_equality(self):
+        d1 = Dihedral(1, 2, 3, 4, 120)
+        d2 = Dihedral(1, 2, 3, 4, 120)
+
+        self.assertEqual(d1, d2)
+
+        d1 = Dihedral(1, 2, 3, 4, 120, charge="+1.0")
+        d2 = Dihedral(1, 2, 3, 4, 120, charge="+1.0")
+
+        self.assertEqual(d1, d2)
 
 
 if __name__ == '__main__':

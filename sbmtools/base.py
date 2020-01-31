@@ -3,9 +3,10 @@ from datetime import date
 from contextlib import ContextDecorator
 
 
-class ParameterFileEntry:
-    def __init__(self, *args):
-        super().__init__()
+class WriteMixin(object):
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
         self._data = [self.convert_numericals(arg) for arg in args]
 
     def __getitem__(self, item):
@@ -21,8 +22,21 @@ class ParameterFileEntry:
             except ValueError:
                 return item
 
+    def __str__(self):
+        return self.write()
+
+    def write(self):
+        return "{0} {1}".format(" ".join([str(item) for item in self._data]),
+                                " ".join([str(value) for value in self.kwargs.values()]))
+
+
+class ParameterFileEntry(WriteMixin, object):
+    def __init__(self, *args, **kwargs):
+        super(ParameterFileEntry, self).__init__(*args, **kwargs)
+
     def __repr__(self):
-        return "<ParameterFileEntry {0}>".format("  ".join([str(item) for item in self._data]))
+        return "<ParameterFileEntry {0} {1}>".format("  ".join([str(item) for item in self._data]),
+                                                     " ".join(["{0}: {1}" for item in self.kwargs.items()]))
 
 
 class AbstractParameterFileParser(ContextDecorator):

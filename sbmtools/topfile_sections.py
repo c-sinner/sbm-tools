@@ -7,7 +7,6 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     line_format = ''
     _title = ''
     fields = []
-    _values = []
     attribute_delimiter = '\n'
     line_delimiter = '\n'
 
@@ -20,8 +19,7 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     def contents(self):
         return self.attribute_delimiter.join([
             self.title,
-            self.header,
-            self.values
+            self.header
         ])
 
     @property
@@ -39,35 +37,6 @@ class AbstractTopFileSection(AbstractParameterFileSection):
     @property
     def header(self):
         return self.header_format.format(**dict(zip(self.fields, self.fields)))
-
-    @property
-    def values(self):
-        if isinstance(self._values, str):
-            return self._values
-        else:
-            return self.line_delimiter.join(
-                [self.format_line(self.prepare_line(line)) for line in self.get_values()]
-            )
-
-    @values.setter
-    def values(self, value):
-        self._values = value
-
-    def prepare_line(self, line):
-        if isinstance(line, dict):
-            return line
-        else:
-            try:
-                return dict(zip(self.fields, line))
-            except TypeError:
-                print("Expected {0} to be a list of values".format(line))
-                raise
-
-    def format_line(self, line):
-        return self.line_format.format(**line)
-
-    def get_values(self):
-        return self._values
 
 
 class DefaultsSection(AbstractTopFileSection):

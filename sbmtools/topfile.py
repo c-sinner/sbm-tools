@@ -79,132 +79,6 @@ class TopFileBase(object):
         self._dihedrals = value
 
 
-"""
-class TopFileSectionContentParser(object):
-    content_class = AbstractTopFileSection
-    title = ''
-    line_delimiter = '\n'
-
-    def __init__(self, content=''):
-        self.content = content
-        self.values = []
-        self.objects = []
-
-    @staticmethod
-    def convert_numericals(items):
-        result = []
-        for item in items:
-            try:
-                result.append(int(item))
-            except:
-                try:
-                    result.append(float(item))
-                except:
-                    result.append(item)
-        return result
-
-    def parse(self, data):
-        self.values = self.process_content(data)
-        self.objects = self.process_values()
-        return self.export()
-
-    def process_content(self, data):
-        return [self.convert_numericals(line.split()) for line in data.split(self.line_delimiter)[1:] if line]
-
-    def export(self):
-        return self.content_class(**{'title': self.title, 'values': self.values, 'objects': self.objects})
-
-
-class PairsContentParser(TopFileSectionContentParser):
-    def process_content(self, data):
-        return [self.convert_numericals(line.split()) for line in data.split(self.line_delimiter)[1:] if line]
-
-
-class TopFileSectionParser(object):
-    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
-    line_delimiter = '\n'
-
-    def __init__(self, data=''):
-        self.data = data
-        self.title = self.find_title(data)
-        self.content = self.split_content(data)
-
-        self.content_parser = TopFileSectionContentParser
-        self.section = AbstractTopFileSection()
-
-    def export(self):
-        return self.section
-
-    def find_title(self, data):
-        m = re.match(self.title_regex, data)
-        if m:
-            return m.group(1)
-        return ''
-
-    def split_content(self, data):
-        return data.split(self.line_delimiter)[1:]
-
-    def process_content(self):
-        if self.title == 'pairs':
-            self.content_parser = PairsContentParser
-        self.content = self.content_parser.parse(self.content)
-
-    '''
-    def process_values(self):
-        if self.title == 'pairs':
-            return PairsList([AtomPair(value[0], value[1], 0.8) for value in self.values])
-        elif isinstance(self.values[0][0], int) and isinstance(self.values[0][1], int):
-            return PairsList([AbstractAtomPair(value[0], value[1]) for value in self.values])
-        elif isinstance(self.values[0][0], int):
-            return AtomsList([Atom(value[0]) for value in self.values])
-        else:
-            return []
-    '''
-
-
-class TopFileParserOld(TopFileBase, AbstractParameterFileParser):
-    sections_regex = r'\[[a-z\s]*\][a-zA-Z0-9\#\+\;\s\-\n\.\(\)]*\n'
-    title_regex = r'\[\s*([a-zA-Z0-9]*)\s*\]'
-    line_delimiter = '\n'
-
-    def __init__(self, data):
-        super(TopFileParserOld, self).__init__(data)
-
-    def parse(self):
-        return self.postprocess_result(self.find_sections(self.preprocess_data(self.data)))
-
-    # handle same titles
-    def postprocess_result(self, sections_list):
-        def flatten(list_of_lists):
-            return [item for sublist in list_of_lists for item in sublist]
-
-        # TODO: FIX THIS WITH REDUCE
-
-        unique_keys = []
-        [unique_keys.append(x['title']) for x in sections_list if x['title'] not in unique_keys]
-
-        processed = {}
-        for unique_key in unique_keys:
-            processed[unique_key] = functools.reduce(lambda a, b: a+b, [section for section in sections_list if section['title'] == unique_key])
-
-        processed.update(self.export())
-
-        return processed
-
-    @staticmethod
-    def preprocess_data(data):
-        return re.sub(r';.*(\n|$)', '', data)
-
-    @staticmethod
-    def parse_section(section):
-        section_parser = TopFileSectionParser()
-        return section_parser.parse(section)
-
-    def find_sections(self, data):
-        return list(map(self.parse_section, re.findall(self.sections_regex, data, re.MULTILINE)))
-"""
-
-
 class TopFileParser(AbstractParameterFileParser):
     title_regex = r'^\s*\[\s*([a-zA-Z0-9]*)\s*\]\s*$'
 
@@ -308,7 +182,7 @@ class TopFileParser(AbstractParameterFileParser):
 
 
 class TopFile(TopFileBase, AbstractParameterFile):
-    potential = LennardJonesPotential
+    potential = CombinedGaussianPotential
     parser = TopFileParser
 
     defaults_section = DefaultsSection()
