@@ -109,7 +109,7 @@ class Dihedral(AbstractAtomGroup):
                self.fourth_atom == other.fourth_atom and self.angle == other.angle
 
 
-class AbstractPairsList(list):
+class AbstractPairsList(WriteMixin, list):
     object_class = AbstractAtomGroup
 
     @staticmethod
@@ -140,6 +140,9 @@ class AbstractPairsList(list):
 
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def write(self):
+        sorted(self, key=lambda x: (x.first_atom, x.second_atom, x.potential.header))
 
     def append(self, object):
         self._check_object_type(object, self.object_class)

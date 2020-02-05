@@ -36,7 +36,7 @@ class ParameterFileEntry(WriteMixin, object):
 
     def __repr__(self):
         return "<ParameterFileEntry {0} {1}>".format("  ".join([str(item) for item in self._data]),
-                                                     " ".join(["{0}: {1}" for item in self.kwargs.items()]))
+                                                     " ".join(["{0}: {1}".format(*item) for item in self.kwargs.items()]))
 
 
 class AbstractParameterFileParser(ContextDecorator):
