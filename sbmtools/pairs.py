@@ -1,6 +1,7 @@
 from sbmtools.potentials import AbstractPotential
 
-from sbmtools import WriteMixin
+from sbmtools import WriteMixin, ParameterFileEntry
+from sbmtools.utils import safely
 
 
 class AbstractAtom(WriteMixin, object):
@@ -15,6 +16,11 @@ class AbstractAtom(WriteMixin, object):
     def get_kwargs_formatted(kwargs):
         return ' '.join(['{0}: {1}'.format(*kwarg) for kwarg in kwargs.items()])
 
+    def __str__(self):
+        return "{0} {1} {2}".format(self.first_atom,
+                                    " ".join([str(arg) for arg in self.args]),
+                                    " ".join([str(value) for value in self.kwargs.values()]))  # TODO: Order of kwargs
+
     def __repr__(self):
         return "<AbstractAtom {0} {1}>".format(self.first_atom, self.get_kwargs_formatted(self.kwargs))
 
@@ -23,10 +29,8 @@ class AbstractAtom(WriteMixin, object):
             [getattr(self, parameter) == getattr(other, parameter) for parameter in
              set(list(self.kwargs.keys()) + list(other.kwargs.keys()))])
 
-    def write(self):
-        return "{0} {1} {2}".format(self.first_atom,
-                                    " ".join([str(arg) for arg in self.args]),
-                                    " ".join([str(value) for value in self.kwargs.values()]))
+    def write(self, write_header=False, header="", line_delimiter="\n"):
+        return header + line_delimiter + self.__str__() if write_header else self.__str__()
 
 
 class Atom(AbstractAtom):
@@ -47,6 +51,12 @@ class AbstractAtomGroup(AbstractAtom):
         except TypeError:
             return False
 
+    def __str__(self):
+        if self.is_bound:
+            return self.potential.format.format(**self.potential(self).apply())
+        else:
+            return ''
+
     def __repr__(self):
         return "<AbstractAtomGroup is_bound={0} {1} {2} {3}>".format(self.is_bound, self.first_atom, self.second_atom,
                                                                      self.get_kwargs_formatted(self.kwargs))
@@ -54,24 +64,26 @@ class AbstractAtomGroup(AbstractAtom):
     def __eq__(self, other):
         return super(AbstractAtomGroup, self).__eq__(other) and self.second_atom == other.second_atom
 
-    def write(self):
-        if self.is_bound:
-            return self.potential.format.format(**self.potential(self).apply())
-        else:
-            return ''
-
 
 class AtomPair(AbstractAtomGroup):
     def __init__(self, first_atom, second_atom, distance, **kwargs):
         super(AtomPair, self).__init__(first_atom, second_atom, **kwargs)
         self.distance = distance
 
+    def __repr__(self):
+        return "<Pair {0} {1} - dist: {2} - potential: {3}>".format(self.first_atom, self.second_atom, self.distance,
+                                                                    self.potential)
+
+
+class ExclusionsEntry(AbstractAtomGroup):
+    def __init__(self, first_atom, second_atom, **kwargs):
+        super(ExclusionsEntry, self).__init__(first_atom, second_atom, **kwargs)
+
     def __str__(self):
-        return "{0} {1} - dist: {2} - potential: {3}".format(self.first_atom, self.second_atom, self.distance,
-                                                             self.potential)
+        return "{0} {1}".format(self.first_atom, self.second_atom)
 
     def __repr__(self):
-        return "<Pair {0}>".format(self.__str__())
+        return "<Exclusion {0}>".format(self.__str__())
 
 
 class Angle(AbstractAtomGroup):
@@ -80,11 +92,8 @@ class Angle(AbstractAtomGroup):
         self.third_atom = third_atom
         self.angle = angle
 
-    def __str__(self):
-        return "{0} {1} {2} - theta: {3}".format(self.first_atom, self.second_atom, self.third_atom, self.angle)
-
     def __repr__(self):
-        return "<Angle {0}>".format(self.__str__())
+        return "<Angle {0} {1} {2} - theta: {3}>".format(self.first_atom, self.second_atom, self.third_atom, self.angle)
 
     def __eq__(self, other):
         return super(Angle, self).__eq__(other) and self.third_atom == other.third_atom and self.angle == other.angle
@@ -97,12 +106,9 @@ class Dihedral(AbstractAtomGroup):
         self.fourth_atom = fourth_atom
         self.angle = angle
 
-    def __str__(self):
-        return "{0} {1} {2} {3} - angle: {4} - potential: {5}".format(
-            self.first_atom, self.second_atom, self.third_atom, self.fourth_atom, self.angle, self.potential)
-
     def __repr__(self):
-        return "<Dihedral {0}>".format(self.__str__())
+        return "<Dihedral {0} {1} {2} {3} - angle: {4} - potential: {5}>".format(
+            self.first_atom, self.second_atom, self.third_atom, self.fourth_atom, self.angle, self.potential)
 
     def __eq__(self, other):
         return super(Dihedral, self).__eq__(other) and self.third_atom == other.third_atom and \
@@ -110,6 +116,7 @@ class Dihedral(AbstractAtomGroup):
 
 
 class AbstractPairsList(WriteMixin, list):
+    name = 'abstract pairs'
     object_class = AbstractAtomGroup
 
     @staticmethod
@@ -141,8 +148,16 @@ class AbstractPairsList(WriteMixin, list):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
-    def write(self):
-        sorted(self, key=lambda x: (x.first_atom, x.second_atom, x.potential.header))
+    def write(self, write_header=False, header="", line_delimiter="\n"):
+        header_delimiter = "\n\n"
+        sorted_entries = self.sort_entries(self._data)
+        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
+        entries = zip(sorted_entries, write_header_list)
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], safely(x[0], 'potential.header')) for x in entries])
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: (x.potential.header, x.first_atom, x.second_atom))
 
     def append(self, object):
         self._check_object_type(object, self.object_class)
@@ -233,26 +248,73 @@ class AbstractPairsList(WriteMixin, list):
 class AbstractAtomList(AbstractPairsList):
     object_class = AbstractAtom
 
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: (x.potential.header, x.first_atom))
+
+
+class ParameterFileEntryList(AbstractAtomList):
+    object_class = ParameterFileEntry
+
+    def __init__(self, name="", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name = name
+
+    @staticmethod
+    def sort_entries(data):
+        return data
+
 
 class AtomList(AbstractAtomList):
+    header_format = '{nr:6d} {type:2s} {resnr:7d} {res:>4s} {atom:>3s} {cgnr:6d} {charge:>8.3f} {mass:>8.3f}'
+    name = "atoms"
     object_class = Atom
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: x.first_atom)
+
+    def write(self, write_header=False, header="", line_delimiter="\n"):
+        header_delimiter = "\n\n"
+        sorted_entries = self.sort_entries(self._data)
+        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
+        entries = zip(sorted_entries, write_header_list)
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], safely(x[0], 'potential.header')) for x in entries])
 
 
 class PairsList(AbstractPairsList):
+    name = "pairs"
     object_class = AtomPair
 
 
 class BondsList(AbstractPairsList):
+    name = "bonds"
     object_class = AtomPair
 
 
 class ExclusionsList(AbstractPairsList):
-    object_class = AbstractAtomGroup
+    name = "exclusions"
+    object_class = ExclusionsEntry
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: (x.first_atom, x.second_atom))
 
 
 class AnglesList(AbstractPairsList):
+    name = "angles"
     object_class = Angle
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: (x.potential.header, x.first_atom, x.second_atom, x.third_atom))
 
 
 class DihedralsList(AbstractPairsList):
+    name = "dihedrals"
     object_class = Dihedral
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data,
+                      key=lambda x: (x.potential.header, x.first_atom, x.second_atom, x.third_atom, x.fourth_atom))
