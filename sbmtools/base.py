@@ -6,11 +6,10 @@ from sbmtools.utils import convert_numericals
 
 
 class WriteMixin(object):
-    def __init__(self, formatter="", *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
         self._data = [convert_numericals(arg) for arg in args]
-        self.formatter = formatter
 
     def __getitem__(self, item):
         return self._data[item]
@@ -19,13 +18,10 @@ class WriteMixin(object):
         return self.write()
 
     def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" "):
-        if self.formatter:
-            output = self.formatter.format(**self.kwargs)
-        else:
-            items = item_delimiter.join([str(item) for item in self._data])
-            kwargs = item_delimiter.join([str(value) for value in self.kwargs.values()]) #TODO: Order of kwargs
+        items = item_delimiter.join([str(item) for item in self._data])
+        kwargs = item_delimiter.join([str(value) for value in self.kwargs.values()])
 
-            output = items + item_delimiter + kwargs if kwargs else items
+        output = items + item_delimiter + kwargs if kwargs else items
 
         if write_header:
             return header + line_delimiter + output

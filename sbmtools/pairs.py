@@ -34,6 +34,10 @@ class AbstractAtom(WriteMixin, object):
 
 
 class Atom(AbstractAtom):
+    def __str__(self):
+        print(self.args)
+        return "{0:6d}{1:>4s}{2:8d}{3:>5s}{4:>5s}{5:8d}{6:8.3f}{7:8.3f}".format(self.first_atom, *self.args)
+
     def __repr__(self):
         return "<Atom {0}>".format(self.__str__())
 
@@ -80,7 +84,7 @@ class ExclusionsEntry(AbstractAtomGroup):
         super(ExclusionsEntry, self).__init__(first_atom, second_atom, **kwargs)
 
     def __str__(self):
-        return "{0} {1}".format(self.first_atom, self.second_atom)
+        return "{0:4d} {1:4d}".format(self.first_atom, self.second_atom)
 
     def __repr__(self):
         return "<Exclusion {0}>".format(self.__str__())
