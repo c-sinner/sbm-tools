@@ -181,6 +181,7 @@ class TopFileParser(AbstractParameterFileParser):
 
     def process_entry(self, section_name, line):
         line = re.split(r'(\s+)', line)
+        line = [item for item in map(lambda x: re.sub(r'^\s', '', x), line) if item]
         line = ParameterFileEntry(*[convert_numericals(x) for x in line])
 
         if section_name == "atoms":

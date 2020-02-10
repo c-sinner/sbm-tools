@@ -17,13 +17,16 @@ class WriteMixin(object):
     def __str__(self):
         return self.write()
 
-    def write(self, write_header=False, header="", line_delimiter="\n"):
+    def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" "):
+        items = item_delimiter.join([str(item) for item in self._data])
+        kwargs = item_delimiter.join([str(value) for value in self.kwargs.values()])
+
+        output = items + item_delimiter + kwargs if kwargs else items
+
         if write_header:
-            return "{0}{1}{2} {3}".format(header, line_delimiter, " ".join([str(item) for item in self._data]),
-                                          " ".join([str(value) for value in self.kwargs.values()]))
+            return header + line_delimiter + output
         else:
-            return "{0} {1}".format(" ".join([str(item) for item in self._data]),
-                                    " ".join([str(value) for value in self.kwargs.values()]))
+            return output
 
 
 class ParameterFileEntry(WriteMixin, object):
@@ -34,6 +37,20 @@ class ParameterFileEntry(WriteMixin, object):
         return "<ParameterFileEntry {0} {1}>".format("  ".join([str(item) for item in self._data]),
                                                      " ".join(
                                                          ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
+
+
+class ParameterFileComment(WriteMixin, object):
+    def __init__(self, *args, **kwargs):
+        super(ParameterFileComment, self).__init__(*args, **kwargs)
+
+    def __repr__(self):
+        return "<ParameterFileComment {0} {1}>".format("  ".join([str(item) for item in self._data]),
+                                                       " ".join(
+                                                           ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
+
+    def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" ", comment_character=';'):
+        output = super(ParameterFileComment, self).write(False, item_delimiter=item_delimiter)
+        return comment_character + output
 
 
 class AbstractParameterFileParser(ContextDecorator):
@@ -104,4 +121,3 @@ class AbstractParameterFile(object):
             getattr(self, attr).append(line)
         except AttributeError:
             setattr(self, attr, line)
-
