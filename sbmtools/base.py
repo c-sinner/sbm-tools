@@ -6,10 +6,11 @@ from sbmtools.utils import convert_numericals
 
 
 class WriteMixin(object):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, formatter="", *args, **kwargs):
         self.args = args
         self.kwargs = kwargs
         self._data = [convert_numericals(arg) for arg in args]
+        self.formatter = formatter
 
     def __getitem__(self, item):
         return self._data[item]
@@ -18,10 +19,13 @@ class WriteMixin(object):
         return self.write()
 
     def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" "):
-        items = item_delimiter.join([str(item) for item in self._data])
-        kwargs = item_delimiter.join([str(value) for value in self.kwargs.values()])
+        if self.formatter:
+            output = self.formatter.format(**self.kwargs)
+        else:
+            items = item_delimiter.join([str(item) for item in self._data])
+            kwargs = item_delimiter.join([str(value) for value in self.kwargs.values()]) #TODO: Order of kwargs
 
-        output = items + item_delimiter + kwargs if kwargs else items
+            output = items + item_delimiter + kwargs if kwargs else items
 
         if write_header:
             return header + line_delimiter + output
@@ -38,8 +42,12 @@ class ParameterFileEntry(WriteMixin, object):
                                                      " ".join(
                                                          ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
 
+    def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" "):
+        item_delimiter = ""
+        return super(ParameterFileEntry, self).write(write_header, header, line_delimiter, item_delimiter)
 
-class ParameterFileComment(WriteMixin, object):
+
+class ParameterFileComment(ParameterFileEntry):
     def __init__(self, *args, **kwargs):
         super(ParameterFileComment, self).__init__(*args, **kwargs)
 
@@ -49,6 +57,7 @@ class ParameterFileComment(WriteMixin, object):
                                                            ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
 
     def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" ", comment_character=';'):
+        item_delimiter = ""
         output = super(ParameterFileComment, self).write(False, item_delimiter=item_delimiter)
         return comment_character + output
 
@@ -121,3 +130,10 @@ class AbstractParameterFile(object):
             getattr(self, attr).append(line)
         except AttributeError:
             setattr(self, attr, line)
+        except TypeError:
+            # Check if we wanted to pass a comment. Comments can be discarded when an attribute list does not accept
+            # them.
+            if isinstance(line, ParameterFileComment):
+                pass
+            else:
+                raise

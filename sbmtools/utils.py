@@ -1,7 +1,10 @@
+import re
+
+
 def convert_numericals(item):
-    try:
+    if str(item).replace('-', '').isdigit():
         return int(item)
-    except ValueError:
+    else:
         try:
             return float(item)
         except ValueError:
@@ -17,3 +20,8 @@ def safely(obj, accessors, default=""):
         return return_value
     except AttributeError:
         return default
+
+
+def parse_line(line, comment_character=";"):
+    line = re.sub(r'^\s*' + re.escape(comment_character), '', line)
+    return re.split(r'(\s+)', line)

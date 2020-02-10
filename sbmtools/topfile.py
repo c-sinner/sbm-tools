@@ -1,12 +1,13 @@
 import re
 
-from sbmtools import convert_numericals
+from sbmtools import convert_numericals, ParameterFileComment
 from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 from sbmtools.pairs import AtomPair, PairsList, AnglesList, DihedralsList, Angle, ExclusionsList, \
     Dihedral, BondsList, AtomList, Atom, ExclusionsEntry, ParameterFileEntryList
 from sbmtools.potentials import AbstractPotential, AnglesPotential, BondPotential, ImproperDihedralPotential, \
     DihedralPotential
 from sbmtools.potentials import GaussianPotential, CombinedGaussianPotential
+from sbmtools.utils import parse_line
 
 
 class TopFileBase(object):
@@ -28,9 +29,9 @@ class TopFileBase(object):
 
     def __init__(self, *args, **kwargs):
         super(TopFileBase, self).__init__(*args, **kwargs)
-        self._defaults = ParameterFileEntryList('defaults')
-        self._atomtypes = ParameterFileEntryList('atomtypes')
-        self._moleculetype = ParameterFileEntryList('moleculetype')
+        self._defaults = ParameterFileEntryList(name='defaults')
+        self._atomtypes = ParameterFileEntryList(name='atomtypes')
+        self._moleculetype = ParameterFileEntryList(name='moleculetype')
 
         self._atoms = AtomList()
         self._pairs = PairsList()
@@ -39,8 +40,8 @@ class TopFileBase(object):
         self._angles = AnglesList()
         self._dihedrals = DihedralsList()
 
-        self._system = ParameterFileEntryList('system')
-        self._molecules = ParameterFileEntryList('molecules')
+        self._system = ParameterFileEntryList(name='system')
+        self._molecules = ParameterFileEntryList(name='molecules')
 
     def export(self):
         return {
@@ -176,34 +177,35 @@ class TopFileParser(AbstractParameterFileParser):
     @staticmethod
     def preprocess_line(line):
         line = line.strip('\n')
-        line = re.sub(r';.*$', '', line)
         return line
 
     def process_entry(self, section_name, line):
-        line = re.split(r'(\s+)', line)
-        line = [item for item in map(lambda x: re.sub(r'^\s', '', x), line) if item]
-        line = ParameterFileEntry(*[convert_numericals(x) for x in line])
-
-        if section_name == "atoms":
-            return self.process_atoms_entry(line)
-
-        elif section_name == "pairs":
-            return self.process_pairs_entry(line)
-
-        elif section_name == "bonds":
-            return self.process_bonds_entry(line)
-
-        elif section_name == "exclusions":
-            return self.process_exclusions_entry(line)
-
-        elif section_name == "angles":
-            return self.process_angles_entry(line)
-
-        elif section_name == "dihedrals":
-            return self.process_dihedrals_entry(line)
-
+        if re.match(r"^\s+;", line):
+            entry = ParameterFileComment(*[convert_numericals(x) for x in parse_line(line)])
+            return entry
         else:
-            return line
+            entry = ParameterFileEntry(*[convert_numericals(x) for x in parse_line(line)])
+
+            if section_name == "atoms":
+                return self.process_atoms_entry(entry)
+
+            elif section_name == "pairs":
+                return self.process_pairs_entry(entry)
+
+            elif section_name == "bonds":
+                return self.process_bonds_entry(entry)
+
+            elif section_name == "exclusions":
+                return self.process_exclusions_entry(entry)
+
+            elif section_name == "angles":
+                return self.process_angles_entry(entry)
+
+            elif section_name == "dihedrals":
+                return self.process_dihedrals_entry(entry)
+
+            else:
+                return entry
 
     @staticmethod
     def process_atoms_entry(entry):

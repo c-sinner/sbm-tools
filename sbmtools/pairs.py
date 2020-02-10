@@ -137,8 +137,8 @@ class AbstractPairsList(WriteMixin, list):
             raise TypeError("Could not initialize instance of {0} with {1}. Expected a list or tuple of values.".format(
                 self.object_class, object))
 
-    def __init__(self, data=None, **kwargs):
-        super(AbstractPairsList, self).__init__()
+    def __init__(self, data=None, *args, **kwargs):
+        super(AbstractPairsList, self).__init__(*args, **kwargs)
 
         if data:
             self._data = [self._convert_to_object_class(x) for x in data]
@@ -149,7 +149,7 @@ class AbstractPairsList(WriteMixin, list):
             setattr(self, key, value)
 
     def write(self, write_header=False, header="", line_delimiter="\n"):
-        header_delimiter = "\n\n"
+        header_delimiter = "\n"
         sorted_entries = self.sort_entries(self._data)
         write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
@@ -254,10 +254,11 @@ class AbstractAtomList(AbstractPairsList):
 
 
 class ParameterFileEntryList(AbstractAtomList):
+    name = 'generic block'
     object_class = ParameterFileEntry
 
-    def __init__(self, name="", *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, data=None, name="", *args, **kwargs):
+        super().__init__(data, *args, **kwargs)
         self.name = name
 
     @staticmethod
@@ -275,7 +276,7 @@ class AtomList(AbstractAtomList):
         return sorted(data, key=lambda x: x.first_atom)
 
     def write(self, write_header=False, header="", line_delimiter="\n"):
-        header_delimiter = "\n\n"
+        header_delimiter = "\n"
         sorted_entries = self.sort_entries(self._data)
         write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
