@@ -3,7 +3,7 @@ import re
 from sbmtools import convert_numericals, ParameterFileComment
 from sbmtools.base import AbstractParameterFile, AbstractParameterFileParser, ParameterFileEntry
 from sbmtools.pairs import AtomPair, PairsList, AnglesList, DihedralsList, Angle, ExclusionsList, \
-    Dihedral, BondsList, AtomList, Atom, ExclusionsEntry, ParameterFileEntryList
+    Dihedral, BondsList, AtomList, Atom, ExclusionsEntry, ParameterFileEntryList, AtomType, AtomTypesList
 from sbmtools.potentials import AbstractPotential, AnglesPotential, BondPotential, ImproperDihedralPotential, \
     DihedralPotential
 from sbmtools.potentials import GaussianPotential, CombinedGaussianPotential
@@ -30,7 +30,7 @@ class TopFileBase(object):
     def __init__(self, *args, **kwargs):
         super(TopFileBase, self).__init__(*args, **kwargs)
         self._defaults = ParameterFileEntryList(name='defaults')
-        self._atomtypes = ParameterFileEntryList(name='atomtypes')
+        self._atomtypes = AtomTypesList()
         self._moleculetype = ParameterFileEntryList(name='moleculetype')
 
         self._atoms = AtomList()
@@ -189,6 +189,9 @@ class TopFileParser(AbstractParameterFileParser):
             if section_name == "atoms":
                 return self.process_atoms_entry(entry)
 
+            if section_name == "atomtypes":
+                return self.process_atomtypes_entry(entry)
+
             elif section_name == "pairs":
                 return self.process_pairs_entry(entry)
 
@@ -212,6 +215,10 @@ class TopFileParser(AbstractParameterFileParser):
         return Atom(entry[2], type=entry[4], resnr=entry[6], residue=entry[8], atom=entry[10], cgnr=entry[12], charge=entry[14], mass=entry[16])
 
     @staticmethod
+    def process_atomtypes_entry(entry):
+        return AtomType(0, name=entry[2], mass=entry[4], charge=entry[6], ptype=entry[8], c10=entry[10], c12=entry[12])
+
+    @staticmethod
     def process_pairs_entry(entry):
         if entry[6] == 5:
             return AtomPair(entry[2], entry[4], distance=entry[10], potential=GaussianPotential)
@@ -222,7 +229,7 @@ class TopFileParser(AbstractParameterFileParser):
     @staticmethod
     def process_bonds_entry(entry):
         if entry[6] == 1:
-            return AtomPair(entry[2], entry[4], distance=entry[6], potential=BondPotential)
+            return AtomPair(entry[2], entry[4], distance=entry[8], potential=BondPotential)
         return entry
 
     @staticmethod

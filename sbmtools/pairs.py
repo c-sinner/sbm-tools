@@ -1,7 +1,7 @@
 from sbmtools.potentials import AbstractPotential
 
 from sbmtools import WriteMixin, ParameterFileEntry
-from sbmtools.utils import safely
+from sbmtools.utils import safely, fortran_number_formatter
 
 
 class AbstractAtom(WriteMixin, object):
@@ -35,11 +35,18 @@ class AbstractAtom(WriteMixin, object):
 
 class Atom(AbstractAtom):
     def __str__(self):
-        print(self.args)
-        return "{0:6d}{1:>4s}{2:8d}{3:>5s}{4:>5s}{5:8d}{6:8.3f}{7:8.3f}".format(self.first_atom, *self.args)
+        return "{first_atom:6d}{type:>4s}{resnr:8d}{residue:>5s}{atom:>5s}{cgnr:8d}{charge:8.3f}{mass:8.3f}".format(first_atom = self.first_atom, **self.kwargs)
 
     def __repr__(self):
         return "<Atom {0}>".format(self.__str__())
+
+
+class AtomType(AbstractAtom):
+    def __str__(self):
+        return "{name:4s}{mass:>10.3f}{charge:10.3f} {ptype:<3s}{c10:7.3f}{c12:17.9E}".format(**self.kwargs)
+
+    def __repr__(self):
+        return "<AtomType {0}>".format(self.__str__())
 
 
 class AbstractAtomGroup(AbstractAtom):
@@ -84,7 +91,7 @@ class ExclusionsEntry(AbstractAtomGroup):
         super(ExclusionsEntry, self).__init__(first_atom, second_atom, **kwargs)
 
     def __str__(self):
-        return "{0:4d} {1:4d}".format(self.first_atom, self.second_atom)
+        return "{0:6d} {1:6d}".format(self.first_atom, self.second_atom)
 
     def __repr__(self):
         return "<Exclusion {0}>".format(self.__str__())
@@ -120,6 +127,7 @@ class Dihedral(AbstractAtomGroup):
 
 
 class AbstractPairsList(WriteMixin, list):
+    header = ""
     name = 'abstract pairs'
     object_class = AbstractAtomGroup
 
@@ -157,7 +165,7 @@ class AbstractPairsList(WriteMixin, list):
         sorted_entries = self.sort_entries(self._data)
         write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
-        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], safely(x[0], 'potential.header')) for x in entries])
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([fortran_number_formatter(x[0].write(x[1], safely(x[0], 'potential.header', self.header))) for x in entries])
 
     @staticmethod
     def sort_entries(data):
@@ -271,7 +279,8 @@ class ParameterFileEntryList(AbstractAtomList):
 
 
 class AtomList(AbstractAtomList):
-    header_format = '{nr:6d} {type:2s} {resnr:7d} {res:>4s} {atom:>3s} {cgnr:6d} {charge:>8.3f} {mass:>8.3f}'
+    header = ";   nr  type resnr  res   atom   cgnr  charge   mass"
+    header_format = "{nr:6d} {type:>4s} {resnr:7d} {res:>4s} {atom:>3s} {cgnr:6d} {charge:>8.3f} {mass:>8.3f}"
     name = "atoms"
     object_class = Atom
 
@@ -284,7 +293,17 @@ class AtomList(AbstractAtomList):
         sorted_entries = self.sort_entries(self._data)
         write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
-        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], safely(x[0], 'potential.header')) for x in entries])
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], self.header) for x in entries])
+
+class AtomTypesList(AbstractAtomList):
+    header = ";name  mass     charge   ptype c10       c12"
+    header_format = "{name:4s}{mass:>10.3f}{charge:10.3f} {ptype:<3s}{c10:7.3f}{c12:17.9E}" #TODO: Why is this duplicted?
+    name = "atomtypes"
+    object_class = AtomType
+
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: x.name)
 
 
 class PairsList(AbstractPairsList):
@@ -298,6 +317,7 @@ class BondsList(AbstractPairsList):
 
 
 class ExclusionsList(AbstractPairsList):
+    header = ";   ai     aj"
     name = "exclusions"
     object_class = ExclusionsEntry
 

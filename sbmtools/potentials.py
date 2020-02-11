@@ -14,8 +14,8 @@ class AbstractPotential(object):
 
 
 class BondPotential(AbstractPotential):
-    header = ';ai     aj      func    r0(nm)  Kb'
-    format = '{first_atom:6d} {second_atom:6d} {ftype:d}  {distance:.8E} {kb:.8E}'
+    header = ';   ai     aj func         r0(nm)                Kb'
+    format = '{first_atom:6d} {second_atom:6d} {ftype:d}  {distance:16.9E} {kb:17.9E}'
     strength = 0.200000000E+05
     function_type = 1
 
@@ -33,8 +33,8 @@ class BondPotential(AbstractPotential):
 
 
 class AnglesPotential(AbstractPotential):
-    header = ';ai     aj     ak func     th0(deg)    Ka'
-    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {ftype:d} {theta:.8E} {ka:.8E}'
+    header = ';   ai     aj     ak func       th0(deg)                Ka'
+    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {ftype:d} {theta:17.9E} {ka:17.9E}'
     strength = 4.00000000E+01
     function_type = 1
 
@@ -53,8 +53,8 @@ class AnglesPotential(AbstractPotential):
 
 
 class DihedralPotential(AbstractPotential):
-    header = ';ai     aj      ak      al     ftype     phi0(deg)    Kd    mult'
-    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:.8E} {kd:.8E} {multiplicity:d}'
+    header = ';   ai     aj     ak     al ftype     phi0(deg)   Kd           mult'
+    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:17.9E} {kd:17.9E} {multiplicity:d}'
     strength = 0.500000000E+00
     multiplicity = 3
     fields = [
@@ -91,40 +91,9 @@ class DihedralPotential(AbstractPotential):
         return "<DihedralPotential strength: {0} multiplicity: {1}>".format(self.strength, self.multiplicity)
 
 
-class ImproperDihedralPotential(AbstractPotential):
-    header = ';ai     aj      ak      al     ftype     phi0(deg)    Kd    mult'
-    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:.8E} {kd:.8E} {multiplicity:d}'
+class ImproperDihedralPotential(DihedralPotential):
     strength = 0.100000000E+01
     multiplicity = 1
-    fields = [
-        "first_atom",
-        "second_atom",
-        "third_atom",
-        "fourth_atom",
-        "ftype",
-        "angle",
-        "kd",
-        "multiplicity",
-    ]
-    function_type = 1
-
-    def __init__(self, pair=None):
-        super(ImproperDihedralPotential, self).__init__(pair)
-
-    def apply(self):
-        return {
-            "first_atom": self.pair.first_atom,
-            "second_atom": self.pair.second_atom,
-            "third_atom": self.pair.third_atom,
-            "fourth_atom": self.pair.fourth_atom,
-            "ftype": self.function_type,
-            "angle": self.pair.angle,
-            "kd": self.strength,
-            "multiplicity": self.multiplicity
-        }
-
-    def __str__(self):
-        return self.__repr__()
 
     def __repr__(self):
         return "<ImproperDihedralPotential strength: {0} multiplicity: {1}>".format(self.strength, self.multiplicity)
@@ -209,7 +178,7 @@ class GaussianPotential(AbstractPotential):
 
 
 class CombinedGaussianPotential(AbstractPotential):
-    header = ';   ai     aj ftype             Amplitude     mu    sigma    a'
+    header = ';   ai     aj ftype      Amplitude                 mu              sigma                  a'
     format = '{first_atom:6d} {second_atom:6d} {ftype:d} {amplitude:18.9E} {mu:18.9E} {sigma:18.9E} {a:18.9E}'
     fields = [
         "first_atom",
@@ -234,7 +203,7 @@ class CombinedGaussianPotential(AbstractPotential):
             "amplitude": self.strength,
             "mu": self.pair.distance,
             "sigma": math.sqrt(self.pair.distance**2/(50*math.log(2, math.e))),
-            "a": 0.59605E-09
+            "a": 0.167772196E-04 #TODO: CHECK THIS VALUE
         }
 
     def __str__(self):
