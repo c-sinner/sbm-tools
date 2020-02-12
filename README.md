@@ -19,6 +19,12 @@ There is no specific installation script at the moment. Download the repository 
 wget https://github.com/c-sinner/sbm-tools.git
 ```
 
+and try to run the installer with 
+
+```shell script
+python3 setup.py install
+```
+
 The software writes input files for [GROMACS](http://www.gromacs.org/). If you want to use gaussian potentials please install and use the GROMACS binary distributed on the SMOG website:
 
 [Gromacs v4.5.4 containing Gaussian contact potentials](http://smog-server.org/SBMextension.html#gauss)

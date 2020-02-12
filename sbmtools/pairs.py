@@ -295,6 +295,7 @@ class AtomList(AbstractAtomList):
         entries = zip(sorted_entries, write_header_list)
         return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], self.header) for x in entries])
 
+
 class AtomTypesList(AbstractAtomList):
     header = ";name  mass     charge   ptype c10       c12"
     header_format = "{name:4s}{mass:>10.3f}{charge:10.3f} {ptype:<3s}{c10:7.3f}{c12:17.9E}" #TODO: Why is this duplicted?
