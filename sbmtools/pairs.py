@@ -207,11 +207,11 @@ class AbstractPairsList(WriteMixin, list):
 
     def __add__(self, other):
         self._check_object_type(other, self.__class__)
-        return AbstractPairsList(self._data + list(other))
+        return self.__class__(self._data + list(other))
 
     def __sub__(self, other):
         self._check_object_type(other, self.__class__)
-        return AbstractPairsList([element for element in self._data if element not in list(other)])
+        return self.__class__([element for element in self._data if element not in list(other)])
 
     def __getitem__(self, item):
         return self._data[item]
@@ -225,7 +225,7 @@ class AbstractPairsList(WriteMixin, list):
 
     def __iadd__(self, other):
         self._check_object_type(other, self.__class__)
-        return AbstractPairsList(self._data + list(other))
+        return self.__class__(self._data + list(other))
 
     def __imul__(self, *args, **kwargs):
         raise AttributeError
