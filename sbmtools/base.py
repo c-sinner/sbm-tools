@@ -34,7 +34,7 @@ class ParameterFileEntry(WriteMixin, object):
         super(ParameterFileEntry, self).__init__(*args, **kwargs)
 
     def __repr__(self):
-        return "<ParameterFileEntry {0} {1}>".format("  ".join([str(item) for item in self._data]),
+        return "<{0} {1} {2}>".format(self.__class__.__name__, "  ".join([str(item) for item in self._data]),
                                                      " ".join(
                                                          ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
 
@@ -46,11 +46,6 @@ class ParameterFileEntry(WriteMixin, object):
 class ParameterFileComment(ParameterFileEntry):
     def __init__(self, *args, **kwargs):
         super(ParameterFileComment, self).__init__(*args, **kwargs)
-
-    def __repr__(self):
-        return "<ParameterFileComment {0} {1}>".format("  ".join([str(item) for item in self._data]),
-                                                       " ".join(
-                                                           ["{0}: {1}".format(*item) for item in self.kwargs.items()]))
 
     def write(self, write_header=False, header="", line_delimiter="\n", item_delimiter=" ", comment_character=';'):
         item_delimiter = ""
