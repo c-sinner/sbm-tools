@@ -1,7 +1,9 @@
 import re
+from typing import Union, Any
 
 
-def convert_numericals(item):
+def convert_numericals(item: Union[int, float, str]) -> Union[int, float, str]:
+    """Convert full numbers to INT, fractional numbers to FLOAT, and leave strings as STRING."""
     if str(item).replace('-', '').isdigit():
         return int(item)
     else:
@@ -11,7 +13,11 @@ def convert_numericals(item):
             return item
 
 
-def safely(obj, accessors, default=""):
+def safely(obj: object, accessors: str, default: Any = "") -> Any:
+    """
+    Allow parameter access in nested children when existing or fail to given default.
+    """
+
     accessor_list = accessors.split(".")
     try:
         return_value = obj
@@ -22,13 +28,15 @@ def safely(obj, accessors, default=""):
         return default
 
 
-def parse_line(line, comment_character=";"):
+def parse_line(line: str, comment_character: str = ";"):
     line = re.sub(r'^\s*' + re.escape(comment_character), '', line)
     return re.split(r'(\s+)', line)
 
 
-def fortran_number_formatter(input_string):
+def fortran_number_formatter(input_string: str) -> str:
     """
+    Convert a scientific number to have a leading zero, 2.0E+01 -> 0.2E+02.
+
     The majority of GROMACS input files use Fortran number formatting in which the scientifically formatted
     numbers have a 0 as integer part and the value in the fractional part. -> 0.XXXXXXXXXE+EX
 
