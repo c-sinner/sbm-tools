@@ -54,7 +54,7 @@ class TopFileParser(AbstractParameterFileParser):
             if section_name == "atoms":
                 return self.process_atoms_entry(entry)
 
-            if section_name == "atomtypes":
+            elif section_name == "atomtypes":
                 return self.process_atomtypes_entry(entry)
 
             elif section_name == "pairs":
