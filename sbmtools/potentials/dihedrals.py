@@ -1,4 +1,4 @@
-from sbmtools.potentials import AbstractPotential
+from sbmtools.potentials.base import AbstractPotential
 
 
 class DihedralPotential(AbstractPotential):
@@ -46,3 +46,12 @@ class ImproperDihedralPotential(DihedralPotential):
 
     def __repr__(self):
         return "<ImproperDihedralPotential strength: {0} multiplicity: {1}>".format(self.strength, self.multiplicity)
+
+
+class AllAtomDihedralPotential(DihedralPotential):
+    strength = 0.100000000E+01
+    multiplicity = 2
+    format = '{first_atom:6d} {second_atom:6d} {third_atom:6d} {fourth_atom:6d} {ftype:d} {angle:17.9E} {kd:17.9E}'
+
+    def __repr__(self):
+        return "<ImproperDihedralPotential strength: {0}>".format(self.strength, self.multiplicity)

@@ -1,4 +1,4 @@
-from sbmtools.potentials import AbstractPotential
+from sbmtools.potentials.base import AbstractPotential
 
 from sbmtools import WriteMixin, ParameterFileEntry
 from sbmtools.utils import safely, fortran_number_formatter

@@ -1,4 +1,4 @@
-from sbmtools.potentials import AbstractPotential
+from sbmtools.potentials.base import AbstractPotential
 
 
 class BondPotential(AbstractPotential):

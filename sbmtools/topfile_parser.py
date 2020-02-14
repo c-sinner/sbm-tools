@@ -1,10 +1,13 @@
 import re
 
+from sbmtools.potentials.dihedrals import AllAtomDihedralPotential
 from sbmtools.utils import convert_numericals, parse_line
-from sbmtools.potentials import GaussianPotential, CombinedGaussianPotential
+from sbmtools.potentials.pairs import GaussianPotential, CombinedGaussianPotential
 from sbmtools.pairs import AtomPair, Angle, Dihedral, Atom, ExclusionsEntry, AtomType
 from sbmtools.base import AbstractParameterFileParser, ParameterFileEntry, ParameterFileComment
-from sbmtools.potentials import AnglesPotential, BondPotential, ImproperDihedralPotential, DihedralPotential
+from sbmtools.potentials.angles import AnglesPotential
+from sbmtools.potentials.bonds import BondPotential
+from sbmtools.potentials.dihedrals import ImproperDihedralPotential, DihedralPotential
 
 
 class TopFileParser(AbstractParameterFileParser):
@@ -117,4 +120,9 @@ class TopFileParser(AbstractParameterFileParser):
             if entry[16] == 3:
                 return Dihedral(entry[2], entry[4], entry[6], entry[8], angle=entry[12],
                                 potential=DihedralPotential)
+
+        if entry[10] == 2:
+            return Dihedral(entry[2], entry[4], entry[6], entry[8], angle=entry[12],
+                            potential=AllAtomDihedralPotential)
+
         return entry

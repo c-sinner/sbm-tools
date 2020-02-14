@@ -1,9 +1,9 @@
 from sbmtools.pairs import PairsList
 from sbmtools.topfile_base import TopFileBase
 from sbmtools.base import AbstractParameterFile
-from sbmtools.potentials import AbstractPotential
+from sbmtools.potentials.base import AbstractPotential
 from sbmtools.topfile_parser import TopFileParser
-from sbmtools.potentials import CombinedGaussianPotential
+from sbmtools.potentials.pairs import CombinedGaussianPotential
 
 
 class TopFile(TopFileBase, AbstractParameterFile):
