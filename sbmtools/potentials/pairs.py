@@ -107,7 +107,7 @@ class CombinedGaussianPotential(AbstractPotential):
             "amplitude": self.strength,
             "mu": self.pair.distance,
             "sigma": math.sqrt(self.pair.distance**2/(50*math.log(2, math.e))),
-            "a": 0.167772196E-04 #TODO: CHECK THIS VALUE
+            "a": 0.167772196E-04  # = 0.4**12
         }
 
     def __str__(self):
