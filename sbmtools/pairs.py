@@ -326,7 +326,7 @@ class DCAPairsList(PairsList):
     def sort_entries(data):
         return sorted(data, key=lambda x: (x.score, x.potential.header, x.first_atom))
 
-    def filter(self, level):
+    def mask(self, cluster_size):
         class Tree(object):
             def __init__(self, input_data):
                 self._branch_mapping = {}
@@ -360,7 +360,7 @@ class DCAPairsList(PairsList):
                 return list(chain(*[x for x in self._branches if len(x) >= filter_level]))
 
         tree = Tree(self._data)
-        self._data = tree.filter(level)
+        self._data = tree.filter(cluster_size)
         return __class__(self._data)
 
 
