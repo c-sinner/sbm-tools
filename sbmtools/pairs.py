@@ -35,7 +35,8 @@ class AbstractAtom(WriteMixin, object):
 
 class Atom(AbstractAtom):
     def __str__(self):
-        return "{first_atom:6d}{type:>4s}{resnr:8d}{residue:>5s}{atom:>5s}{cgnr:8d}{charge:8.3f}{mass:8.3f}".format(first_atom = self.first_atom, **self.kwargs)
+        return "{first_atom:6d}{type:>4s}{resnr:8d}{residue:>5s}{atom:>5s}{cgnr:8d}{charge:8.3f}{mass:8.3f}".format(
+            first_atom=self.first_atom, **self.kwargs)
 
     def __repr__(self):
         return "<Atom {0}>".format(self.__str__())
@@ -163,9 +164,12 @@ class AbstractPairsList(WriteMixin, list):
     def write(self, write_header=False, header="", line_delimiter="\n"):
         header_delimiter = "\n"
         sorted_entries = self.sort_entries(self._data)
-        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
+        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in
+                                      zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
-        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([fortran_number_formatter(x[0].write(x[1], safely(x[0], 'potential.header', self.header))) for x in entries])
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join(
+            [fortran_number_formatter(x[0].write(x[1], safely(x[0], 'potential.header', self.header))) for x in
+             entries])
 
     @staticmethod
     def sort_entries(data):
@@ -291,14 +295,16 @@ class AtomList(AbstractAtomList):
     def write(self, write_header=False, header="", line_delimiter="\n"):
         header_delimiter = "\n"
         sorted_entries = self.sort_entries(self._data)
-        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in zip(sorted_entries, sorted_entries[1:])]
+        write_header_list = [True] + [safely(x[0], 'potential.header') != safely(x[1], 'potential.header') for x in
+                                      zip(sorted_entries, sorted_entries[1:])]
         entries = zip(sorted_entries, write_header_list)
-        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join([x[0].write(x[1], self.header) for x in entries])
+        return ' [ {0} ]'.format(self.name) + header_delimiter + line_delimiter.join(
+            [x[0].write(x[1], self.header) for x in entries])
 
 
 class AtomTypesList(AbstractAtomList):
     header = ";name  mass     charge   ptype c10       c12"
-    header_format = "{name:4s}{mass:>10.3f}{charge:10.3f} {ptype:<3s}{c10:7.3f}{c12:17.9E}" #TODO: Why is this duplicted?
+    header_format = "{name:4s}{mass:>10.3f}{charge:10.3f} {ptype:<3s}{c10:7.3f}{c12:17.9E}"  # TODO: Why is this duplicted?
     name = "atomtypes"
     object_class = AtomType
 
@@ -310,6 +316,52 @@ class AtomTypesList(AbstractAtomList):
 class PairsList(AbstractPairsList):
     name = "pairs"
     object_class = AtomPair
+
+
+from itertools import chain
+
+
+class DCAPairsList(PairsList):
+    @staticmethod
+    def sort_entries(data):
+        return sorted(data, key=lambda x: (x.score, x.potential.header, x.first_atom))
+
+    def filter(self, level):
+        class Tree(object):
+            def __init__(self, input_data):
+                self._branch_mapping = {}
+                self._branches = []
+                for pair in input_data:
+                    leaf_node = self.get_leaf_node(pair)
+                    found = False
+                    for atom_index in leaf_node:
+                        if atom_index in self._branch_mapping.keys():
+                            branch_index = self._branch_mapping[atom_index]
+                            self._branches[branch_index].append(pair)
+                            self.register_mapping(leaf_node, branch_index)
+                            found = True
+                            break
+                    if not found:
+                        self.create_new_branch([pair])
+                        self.register_mapping(leaf_node, len(self._branches) - 1)
+            
+            @staticmethod
+            def get_leaf_node(obj):
+                return [obj.first_atom, obj.second_atom]
+
+            def register_mapping(self, leaf_node, position):
+                for atom_index in leaf_node:
+                    self._branch_mapping[atom_index] = position
+                    
+            def create_new_branch(self, item):
+                self._branches.append([item])
+
+            def filter(self, filter_level):
+                return list(chain(*[x for x in self._branches if len(x) >= filter_level]))
+
+        tree = Tree(self._data)
+        self._data = tree.filter(level)
+        return __class__(self._data)
 
 
 class BondsList(AbstractPairsList):
