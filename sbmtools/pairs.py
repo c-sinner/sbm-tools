@@ -326,6 +326,10 @@ class DCAPairsList(PairsList):
     def sort_entries(data):
         return sorted(data, key=lambda x: (x.score, x.potential.header, x.first_atom))
 
+    def sort(self, *args, **kwargs):
+        self._data = self.sort_entries(self._data)
+        return __class__(self._data)
+
     def mask(self, cluster_size):
         class Tree(object):
             def __init__(self, input_data):
