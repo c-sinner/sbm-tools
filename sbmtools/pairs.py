@@ -346,7 +346,7 @@ class DCAPairsList(PairsList):
                             found = True
                             break
                     if not found:
-                        self.create_new_branch([pair])
+                        self.create_new_branch(pair)
                         self.register_mapping(leaf_node, len(self._branches) - 1)
             
             @staticmethod
