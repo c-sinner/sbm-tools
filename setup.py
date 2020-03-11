@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 setup(name='sbmtools',
       version='0.1',
@@ -9,5 +9,5 @@ setup(name='sbmtools',
       author='Claude Sinner',
       author_email='claude.sinner@utdallas.edu',
       license='GPLv3',
-      packages=['sbmtools', 'test'],
+      packages=find_packages(),
       zip_safe=False)
