@@ -324,23 +324,24 @@ from itertools import chain
 class DCAPairsList(PairsList):
     @staticmethod
     def sort_entries(data):
-        return sorted(data, key=lambda x: (x.score, x.potential.header, x.first_atom))
+        return sorted(data, key=lambda x: (-x.score, x.potential.header, x.first_atom))
 
     def sort(self, *args, **kwargs):
         self._data = self.sort_entries(self._data)
         return __class__(self._data)
 
-    def mask(self, cluster_size):
+    def mask(self, cluster_size, neighborhood_range=5):
         class Tree(object):
-            def __init__(self, input_data):
+            def __init__(self, input_data, neighborhood):
                 self._branch_mapping = {}
                 self._branches = []
                 for pair in input_data:
                     leaf_node = self.get_leaf_node(pair)
                     found = False
                     for atom_index in leaf_node:
-                        if atom_index in self._branch_mapping.keys():
-                            branch_index = self._branch_mapping[atom_index]
+                        possible_mapping_keys = [x for x in self._branch_mapping.keys() if x - atom_index < neighborhood]
+                        if len(possible_mapping_keys) > 0:
+                            branch_index = self._branch_mapping[possible_mapping_keys[0]]
                             self._branches[branch_index].append(pair)
                             self.register_mapping(leaf_node, branch_index)
                             found = True
@@ -363,7 +364,7 @@ class DCAPairsList(PairsList):
             def filter(self, filter_level):
                 return list(chain(*[x for x in self._branches if len(x) >= filter_level]))
 
-        tree = Tree(self._data)
+        tree = Tree(self._data, neighborhood_range)
         self._data = tree.filter(cluster_size)
         return __class__(self._data)
 
